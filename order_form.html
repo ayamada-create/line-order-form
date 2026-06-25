@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ご注文フォーム</title>
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root {
+      --green: #06C755;
+      --dark-green: #05a847;
+      --light-green: #e8f9ed;
+      --gray: #6c757d;
+      --light-gray: #f5f5f5;
+      --border: #ddd;
+      --danger: #dc3545;
+      --text: #333;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+      background: #f0f0f0;
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .app-header {
+      background: var(--green);
+      color: #fff;
+      padding: 14px 16px;
+      text-align: center;
+      font-size: 17px;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    /* ステップインジケーター */
+    .step-indicator {
+      background: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .step-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+    .step-dot.active { background: var(--green); transform: scale(1.3); }
+    .step-dot.done { background: var(--dark-green); }
+    .step-label {
+      font-size: 12px;
+      color: var(--gray);
+      text-align: center;
+      padding: 6px 16px 0;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+    }
+    /* カード */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      margin: 14px;
+      padding: 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--green);
+      border-left: 4px solid var(--green);
+      padding-left: 10px;
+      margin-bottom: 14px;
+    }
+    /* フォーム要素 */
+    label { display: block; font-size: 13px; color: var(--gray); margin-bottom: 4px; }
+    label span.req { color: var(--danger); margin-left: 4px; }
+    input[type="text"],
+    input[type="tel"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      color: var(--text);
+      background: #fff;
+      appearance: none;
+      -webkit-appearance: none;
+      margin-bottom: 14px;
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23999' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+    textarea { height: 90px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 0 2px rgba(6,199,85,0.15);
+    }
+    .field-group { margin-bottom: 4px; }
+    /* 商品カード */
+    .product-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .product-item:last-child { border-bottom: none; }
+    .product-info { flex: 1; }
+    .product-name { font-size: 14px; font-weight: bold; }
+    .product-price { font-size: 13px; color: var(--green); margin-top: 2px; }
+    .product-qty { width: 80px; margin: 0 0 0 12px; }
+    /* 合計バー */
+    .total-bar {
+      background: var(--light-green);
+      border: 1px solid #aee6c2;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 12px;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .total-row.grand {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--dark-green);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #aee6c2;
+    }
+    /* 決済方法 */
+    .payment-option {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .payment-option.selected {
+      border-color: var(--green);
+      background: var(--light-green);
+    }
+    .payment-option input[type="radio"] { display: none; }
+    .payment-title { font-size: 15px; font-weight: bold; }
+    .payment-desc { font-size: 12px; color: var(--gray); margin-top: 4px; }
+    .warning-box {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #795548;
+      margin-top: 8px;
+    }
+    /* 届け先 */
+    .address-option {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .address-option.selected {
+      border-color: var(--green);
+      background: var(--light-green);
+    }
+    .address-option input[type="radio"] { display: none; }
+    /* 確認画面 */
+    .confirm-section { margin-bottom: 16px; }
+    .confirm-label { font-size: 12px; color: var(--gray); }
+    .confirm-value { font-size: 14px; font-weight: bold; margin-top: 2px; }
+    .confirm-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 14px;
+    }
+    .confirm-row:last-child { border-bottom: none; }
+    /* ボタン */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 24px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-secondary {
+      background: #fff;
+      color: var(--gray);
+      border: 1px solid var(--border);
+      margin-top: 10px;
+    }
+    .btn-confirm { background: #ff6b00; color: #fff; }
+    .btn-area { padding: 6px 14px 28px; }
+    /* ページ管理 */
+    .page { display: none; }
+    .page.active { display: block; }
+    /* 完了画面 */
+    .complete-icon {
+      text-align: center;
+      font-size: 64px;
+      margin: 20px 0 10px;
+    }
+    .complete-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--green);
+    }
+    .complete-desc {
+      text-align: center;
+      font-size: 14px;
+      color: var(--gray);
+      margin-top: 10px;
+      line-height: 1.7;
+    }
+    /* エラー */
+    .error-msg {
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: -10px;
+      margin-bottom: 8px;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray);
+      font-size: 14px;
+    }
+    .spinner {
+      display: inline-block;
+      width: 36px; height: 36px;
+      border: 3px solid #ddd;
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .bank-info {
+      background: var(--light-green);
+      border: 1px solid #aee6c2;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.8;
+      margin-top: 10px;
+    }
+    .bank-info h4 { color: var(--dark-green); margin-bottom: 6px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="app-header">🛒 ご注文フォーム</div>
+
+<!-- ステップインジケーター -->
+<div class="step-indicator" id="stepIndicator">
+  <div class="step-dot active" id="dot0"></div>
+  <div class="step-dot" id="dot1"></div>
+  <div class="step-dot" id="dot2"></div>
+  <div class="step-dot" id="dot3"></div>
+  <div class="step-dot" id="dot4"></div>
+</div>
+<div class="step-label" id="stepLabel">STEP 1 / 5 ： 会員情報の入力</div>
+
+<!-- ============ PAGE 1: 会員情報 ============ -->
+<div class="page active" id="page1">
+  <div class="card">
+    <div class="card-title">👤 会員情報の入力</div>
+
+    <div class="field-group">
+      <label>会員番号 <span class="req">*</span></label>
+      <input type="text" id="memberNo" placeholder="例：12345" />
+      <div class="error-msg" id="err-memberNo"></div>
+    </div>
+
+    <div class="field-group">
+      <label>お名前（漢字） <span class="req">*</span></label>
+      <input type="text" id="memberName" placeholder="例：山田 太郎" />
+      <div class="error-msg" id="err-memberName"></div>
+    </div>
+
+    <div class="field-group">
+      <label>LINE ID（自動取得）</label>
+      <input type="text" id="lineIdDisplay" placeholder="取得中..." readonly
+        style="background:#f5f5f5; color:var(--gray);" />
+    </div>
+  </div>
+
+  <div class="btn-area">
+    <button class="btn btn-primary" onclick="goPage2()">次へ：商品選択　→</button>
+  </div>
+</div>
+
+<!-- ============ PAGE 2: 商品選択 ============ -->
+<div class="page" id="page2">
+  <div class="card">
+    <div class="card-title">🛍 商品選択</div>
+
+    <!-- 商品1 -->
+    <div class="product-item">
+      <div class="product-info">
+        <div class="product-name">カラダリケア</div>
+        <div class="product-price">¥13,930（税込）</div>
+      </div>
+      <select class="product-qty" id="qty0" onchange="updateTotal()">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </div>
+
+    <!-- 商品2 -->
+    <div class="product-item">
+      <div class="product-info">
+        <div class="product-name">カンカカプセル 1セット（2袋）</div>
+        <div class="product-price">¥13,930（税込）</div>
+      </div>
+      <select class="product-qty" id="qty1" onchange="updateTotal()">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </div>
+
+    <!-- 商品3 -->
+    <div class="product-item">
+      <div class="product-info">
+        <div class="product-name">カンカカプセル 単品</div>
+        <div class="product-price">¥7,500（税込）</div>
+        <div style="font-size:11px;color:var(--gray);">※最大1点まで</div>
+      </div>
+      <select class="product-qty" id="qty2" onchange="updateTotal()">
+        <option value="0">0</option>
+        <option value="1">1</option>
+      </select>
+    </div>
+
+    <!-- 商品4 -->
+    <div class="product-item">
+      <div class="product-info">
+        <div class="product-name">リッチジェル</div>
+        <div class="product-price">¥13,930（税込）</div>
+      </div>
+      <select class="product-qty" id="qty3" onchange="updateTotal()">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </div>
+
+    <!-- 合計 -->
+    <div class="total-bar" id="totalBar">
+      <div class="total-row">
+        <span>商品小計</span>
+        <span id="subtotalAmt">¥0</span>
+      </div>
+      <div class="total-row" id="shippingRow" style="display:none;">
+        <span>送料</span>
+        <span>¥890</span>
+      </div>
+      <div class="total-row grand">
+        <span>ご請求合計</span>
+        <span id="totalAmt">¥0</span>
+      </div>
+    </div>
+    <div class="error-msg" id="err-product" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="btn-area">
+    <button class="btn btn-primary" onclick="goPage3()">次へ：お支払い方法　→</button>
+    <button class="btn btn-secondary" onclick="goPage(1)">← 戻る</button>
+  </div>
+</div>
+
+<!-- ============ PAGE 3: 決済方法 ============ -->
+<div class="page" id="page3">
+  <div class="card">
+    <div class="card-title">💳 お支払い方法</div>
+
+    <div class="payment-option" id="pay-credit" onclick="selectPayment('credit')">
+      <input type="radio" name="payment" value="credit" />
+      <div class="payment-title">💳 クレジットカード</div>
+      <div class="payment-desc">登録済みのクレジットカードでお支払い</div>
+    </div>
+
+    <div class="payment-option" id="pay-bank" onclick="selectPayment('bank')">
+      <input type="radio" name="payment" value="bank" />
+      <div class="payment-title">🏦 銀行振込</div>
+      <div class="payment-desc">ご注文後、振込先をご案内します</div>
+    </div>
+
+    <div class="payment-option" id="pay-np" onclick="selectPayment('np')">
+      <input type="radio" name="payment" value="np" />
+      <div class="payment-title">🏪 NP後払い</div>
+      <div class="payment-desc">PayPayなど、コンビニ・銀行・郵便局でお支払い</div>
+      <div class="warning-box">
+        ⚠️ NP後払いは購入金額の上限が <strong>60,000円</strong> です。<br>
+        また、株式会社ネットプロテクションズの審査があり、審査結果によっては他の決済方法をお願いする場合があります。
+      </div>
+    </div>
+
+    <div class="error-msg" id="err-payment"></div>
+    <div id="np-limit-warning" style="display:none;" class="warning-box" style="margin-top:8px;">
+      ⛔ NP後払いは60,000円を超えるご注文には対応しておりません。クレジットカードまたは銀行振込をご選択ください。
+    </div>
+  </div>
+
+  <div class="btn-area">
+    <button class="btn btn-primary" onclick="goPage4()">次へ：お届け先　→</button>
+    <button class="btn btn-secondary" onclick="goPage(2)">← 戻る</button>
+  </div>
+</div>
+
+<!-- ============ PAGE 4: 届け先 ============ -->
+<div class="page" id="page4">
+  <div class="card">
+    <div class="card-title">📦 お届け先</div>
+
+    <div class="address-option selected" id="addr-registered" onclick="selectAddress('registered')">
+      <input type="radio" name="address" value="registered" checked />
+      <div class="payment-title">🏠 登録住所へ届ける</div>
+      <div class="payment-desc">会員情報に登録されている住所へお届け</div>
+    </div>
+
+    <div class="address-option" id="addr-other" onclick="selectAddress('other')">
+      <input type="radio" name="address" value="other" />
+      <div class="payment-title">📬 別送先へ届ける</div>
+      <div class="payment-desc">異なる住所を指定する</div>
+    </div>
+
+    <!-- 別送先フォーム -->
+    <div id="otherAddressForm" style="display:none; margin-top:14px;">
+      <div class="field-group">
+        <label>郵便番号 <span class="req">*</span></label>
+        <input type="text" id="altZip" placeholder="例：123-4567" />
+        <div class="error-msg" id="err-altZip"></div>
+      </div>
+      <div class="field-group">
+        <label>住所（都道府県〜丁目番地） <span class="req">*</span></label>
+        <input type="text" id="altAddress" placeholder="例：東京都新宿区〇〇 1-2-3" />
+        <div class="error-msg" id="err-altAddress"></div>
+      </div>
+      <div class="field-group">
+        <label>マンション名・号室</label>
+        <input type="text" id="altBuilding" placeholder="例：○○マンション 301号室" />
+      </div>
+      <div class="field-group">
+        <label>届け先お名前 <span class="req">*</span></label>
+        <input type="text" id="altName" placeholder="例：鈴木 花子" />
+        <div class="error-msg" id="err-altName"></div>
+      </div>
+      <div class="field-group">
+        <label>電話番号 <span class="req">*</span></label>
+        <input type="tel" id="altPhone" placeholder="例：090-1234-5678" />
+        <div class="error-msg" id="err-altPhone"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📝 特記事項</div>
+    <textarea id="remarks" placeholder="ご要望・特記事項があればご記入ください（任意）"></textarea>
+  </div>
+
+  <div class="btn-area">
+    <button class="btn btn-primary" onclick="goPage5()">確認画面へ　→</button>
+    <button class="btn btn-secondary" onclick="goPage(3)">← 戻る</button>
+  </div>
+</div>
+
+<!-- ============ PAGE 5: 確認画面 ============ -->
+<div class="page" id="page5">
+  <div class="card">
+    <div class="card-title">✅ ご注文内容の確認</div>
+
+    <div class="confirm-section">
+      <div class="confirm-label">会員番号</div>
+      <div class="confirm-value" id="conf-memberNo"></div>
+    </div>
+    <div class="confirm-section">
+      <div class="confirm-label">お名前</div>
+      <div class="confirm-value" id="conf-memberName"></div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #eee;margin:12px 0;">
+
+    <div class="confirm-section">
+      <div class="confirm-label">ご注文商品</div>
+      <div id="conf-products"></div>
+    </div>
+    <div style="margin-top:8px;">
+      <div class="confirm-row">
+        <span>商品小計</span>
+        <span id="conf-subtotal"></span>
+      </div>
+      <div class="confirm-row" id="conf-shipping-row" style="display:none;">
+        <span>送料</span>
+        <span>¥890</span>
+      </div>
+      <div class="confirm-row" style="font-weight:bold;color:var(--dark-green);">
+        <span>ご請求合計</span>
+        <span id="conf-total"></span>
+      </div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #eee;margin:12px 0;">
+
+    <div class="confirm-section">
+      <div class="confirm-label">お支払い方法</div>
+      <div class="confirm-value" id="conf-payment"></div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #eee;margin:12px 0;">
+
+    <div class="confirm-section">
+      <div class="confirm-label">お届け先</div>
+      <div class="confirm-value" id="conf-address"></div>
+    </div>
+
+    <div id="conf-remarks-wrap" style="display:none;">
+      <hr style="border:none;border-top:1px solid #eee;margin:12px 0;">
+      <div class="confirm-section">
+        <div class="confirm-label">特記事項</div>
+        <div class="confirm-value" id="conf-remarks"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-area">
+    <button class="btn btn-confirm" onclick="submitOrder()">✅ 注文を確定する</button>
+    <button class="btn btn-secondary" onclick="goPage(4)">← 内容を修正する</button>
+  </div>
+</div>
+
+<!-- ============ PAGE 6: 送信中 ============ -->
+<div class="page" id="page6">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>ご注文を送信中です。<br>しばらくお待ちください...</div>
+  </div>
+</div>
+
+<!-- ============ PAGE 7: 完了 ============ -->
+<div class="page" id="page7">
+  <div class="complete-icon">🎉</div>
+  <div class="complete-title">ご注文ありがとうございます！</div>
+  <div class="complete-desc" id="completeDesc">
+    ご注文を受け付けました。<br>
+    LINEに注文確認メッセージをお送りします。
+  </div>
+
+  <div id="bankInfoDisplay" style="display:none;">
+    <div class="card">
+      <div class="card-title">🏦 お振込先のご案内</div>
+      <div class="bank-info">
+        <h4>◆ ゆうちょ銀行からのお振込</h4>
+        記号：10050　番号：7258141<br>
+        名義：ニッシンショウジ(カ
+        <br><br>
+        <h4>◆ ゆうちょ銀行以外の金融機関からのお振込</h4>
+        ゆうちょ銀行　支店：ゼロゼロハチ<br>
+        普通　口座番号：725814<br>
+        名義：ニッシンショウジ(カ
+        <br><br>
+        <strong>※ 振込手数料はご本人様のご負担となります。</strong><br>
+        ※ 振込後に発行される「利用明細」をLINEから写真でお送りください。<br>
+        ※ 送金依頼人入力時に <strong>「会員番号」</strong> を名前の前にご入力ください。
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// 設定（デプロイ後に書き換えてください）
+// ================================================================
+const LIFF_ID = '2010475932-1iD1eu6x';          // LIFFアプリID
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyaHsdsZd5ZHAj6pYKdU4oeuwBR1-gMs5-3fa88LmQY2ZHatEUbB876jQ-Hl8vB6P6wgw/exec';  // GASデプロイURL
+
+// ================================================================
+// 商品マスター
+// ================================================================
+const PRODUCTS = [
+  { name: 'カラダリケア',              price: 13930 },
+  { name: 'カンカカプセル 1セット(2袋)', price: 13930 },
+  { name: 'カンカカプセル 単品',        price:  7500 },
+  { name: 'リッチジェル',               price: 13930 },
+];
+const SHIPPING_FEE   = 890;
+const FREE_SHIP_MIN  = 20000;
+const NP_LIMIT       = 60000;
+const PAYMENT_LABELS = { credit: 'クレジットカード', bank: '銀行振込', np: 'NP後払い' };
+
+// ================================================================
+// 状態
+// ================================================================
+let state = {
+  lineUserId: '',
+  memberNo: '',
+  memberName: '',
+  quantities: [0,0,0,0],
+  subtotal: 0,
+  shipping: 0,
+  total: 0,
+  payment: '',
+  addressType: 'registered',
+  altZip: '', altAddress: '', altBuilding: '', altName: '', altPhone: '',
+  remarks: '',
+};
+
+// ================================================================
+// LIFF初期化
+// ================================================================
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+    const profile = await liff.getProfile();
+    state.lineUserId = profile.userId;
+    document.getElementById('lineIdDisplay').value = profile.userId;
+  } catch(e) {
+    console.error('LIFF init error:', e);
+    document.getElementById('lineIdDisplay').value = '取得失敗（ブラウザ確認中）';
+  }
+  updateTotal();
+});
+
+// ================================================================
+// ページ管理
+// ================================================================
+const TOTAL_PAGES = 5;
+const STEP_LABELS = [
+  'STEP 1 / 5 ： 会員情報の入力',
+  'STEP 2 / 5 ： 商品選択',
+  'STEP 3 / 5 ： お支払い方法',
+  'STEP 4 / 5 ： お届け先・特記事項',
+  'STEP 5 / 5 ： ご注文内容の確認',
+];
+
+function goPage(n) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page' + n).classList.add('active');
+  window.scrollTo(0, 0);
+  const stepIdx = n - 1;
+  // ステップUI更新（page6,7は非表示）
+  document.getElementById('stepIndicator').style.display = (n > 5) ? 'none' : 'flex';
+  document.getElementById('stepLabel').style.display     = (n > 5) ? 'none' : 'block';
+  if (n <= 5) {
+    document.getElementById('stepLabel').textContent = STEP_LABELS[stepIdx];
+    for (let i = 0; i < TOTAL_PAGES; i++) {
+      const dot = document.getElementById('dot' + i);
+      dot.className = 'step-dot';
+      if (i < stepIdx) dot.classList.add('done');
+      else if (i === stepIdx) dot.classList.add('active');
+    }
+  }
+}
+
+// ================================================================
+// PAGE1 → PAGE2
+// ================================================================
+function goPage2() {
+  let ok = true;
+  document.getElementById('err-memberNo').textContent   = '';
+  document.getElementById('err-memberName').textContent = '';
+
+  const no   = document.getElementById('memberNo').value.trim();
+  const name = document.getElementById('memberName').value.trim();
+
+  if (!no) {
+    document.getElementById('err-memberNo').textContent = '会員番号を入力してください';
+    ok = false;
+  }
+  if (!name) {
+    document.getElementById('err-memberName').textContent = 'お名前を入力してください';
+    ok = false;
+  }
+  if (!ok) return;
+
+  state.memberNo   = no;
+  state.memberName = name;
+  goPage(2);
+}
+
+// ================================================================
+// 合計計算
+// ================================================================
+function updateTotal() {
+  const qtys = [
+    parseInt(document.getElementById('qty0').value),
+    parseInt(document.getElementById('qty1').value),
+    parseInt(document.getElementById('qty2').value),
+    parseInt(document.getElementById('qty3').value),
+  ];
+  state.quantities = qtys;
+  const subtotal = PRODUCTS.reduce((s, p, i) => s + p.price * qtys[i], 0);
+  const shipping  = subtotal > 0 && subtotal < FREE_SHIP_MIN ? SHIPPING_FEE : 0;
+  const total     = subtotal + shipping;
+
+  state.subtotal = subtotal;
+  state.shipping = shipping;
+  state.total    = total;
+
+  document.getElementById('subtotalAmt').textContent = '¥' + subtotal.toLocaleString();
+  document.getElementById('totalAmt').textContent    = '¥' + total.toLocaleString();
+  const shRow = document.getElementById('shippingRow');
+  shRow.style.display = shipping > 0 ? 'flex' : 'none';
+
+  // NP後払い上限チェック（PAGE3が開いている場合）
+  checkNpLimit();
+}
+
+// ================================================================
+// PAGE2 → PAGE3
+// ================================================================
+function goPage3() {
+  document.getElementById('err-product').textContent = '';
+  if (state.total === 0) {
+    document.getElementById('err-product').textContent = '商品を1点以上お選びください';
+    return;
+  }
+  goPage(3);
+}
+
+// ================================================================
+// 決済方法選択
+// ================================================================
+function selectPayment(type) {
+  state.payment = type;
+  ['credit','bank','np'].forEach(t => {
+    document.getElementById('pay-' + t).classList.toggle('selected', t === type);
+  });
+  checkNpLimit();
+}
+
+function checkNpLimit() {
+  const warn = document.getElementById('np-limit-warning');
+  if (state.payment === 'np' && state.total > NP_LIMIT) {
+    warn.style.display = 'block';
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+// ================================================================
+// PAGE3 → PAGE4
+// ================================================================
+function goPage4() {
+  document.getElementById('err-payment').textContent = '';
+  if (!state.payment) {
+    document.getElementById('err-payment').textContent = 'お支払い方法を選択してください';
+    return;
+  }
+  if (state.payment === 'np' && state.total > NP_LIMIT) {
+    document.getElementById('err-payment').textContent =
+      'NP後払いは60,000円を超えるご注文には対応しておりません。他の決済方法をご選択ください。';
+    return;
+  }
+  goPage(4);
+}
+
+// ================================================================
+// 届け先選択
+// ================================================================
+function selectAddress(type) {
+  state.addressType = type;
+  document.getElementById('addr-registered').classList.toggle('selected', type === 'registered');
+  document.getElementById('addr-other').classList.toggle('selected', type === 'other');
+  document.getElementById('otherAddressForm').style.display = type === 'other' ? 'block' : 'none';
+}
+
+// ================================================================
+// PAGE4 → PAGE5（確認画面）
+// ================================================================
+function goPage5() {
+  // 別送先バリデーション
+  const errs = ['altZip','altAddress','altName','altPhone'];
+  errs.forEach(id => document.getElementById('err-' + id).textContent = '');
+  let ok = true;
+
+  if (state.addressType === 'other') {
+    const zip   = document.getElementById('altZip').value.trim();
+    const addr  = document.getElementById('altAddress').value.trim();
+    const aname = document.getElementById('altName').value.trim();
+    const phone = document.getElementById('altPhone').value.trim();
+
+    if (!zip)   { document.getElementById('err-altZip').textContent   = '郵便番号を入力してください'; ok = false; }
+    if (!addr)  { document.getElementById('err-altAddress').textContent = '住所を入力してください'; ok = false; }
+    if (!aname) { document.getElementById('err-altName').textContent  = 'お名前を入力してください'; ok = false; }
+    if (!phone) { document.getElementById('err-altPhone').textContent = '電話番号を入力してください'; ok = false; }
+
+    if (!ok) return;
+    state.altZip      = zip;
+    state.altAddress  = addr;
+    state.altBuilding = document.getElementById('altBuilding').value.trim();
+    state.altName     = aname;
+    state.altPhone    = phone;
+  }
+  state.remarks = document.getElementById('remarks').value.trim();
+
+  buildConfirmPage();
+  goPage(5);
+}
+
+// ================================================================
+// 確認画面構築
+// ================================================================
+function buildConfirmPage() {
+  document.getElementById('conf-memberNo').textContent   = state.memberNo;
+  document.getElementById('conf-memberName').textContent = state.memberName;
+
+  // 商品リスト
+  let prodHtml = '';
+  PRODUCTS.forEach((p, i) => {
+    if (state.quantities[i] > 0) {
+      prodHtml += `<div class="confirm-row">
+        <span>${p.name}×${state.quantities[i]}</span>
+        <span>¥${(p.price * state.quantities[i]).toLocaleString()}</span>
+      </div>`;
+    }
+  });
+  document.getElementById('conf-products').innerHTML = prodHtml;
+
+  document.getElementById('conf-subtotal').textContent = '¥' + state.subtotal.toLocaleString();
+  document.getElementById('conf-total').textContent    = '¥' + state.total.toLocaleString();
+  const shRow = document.getElementById('conf-shipping-row');
+  shRow.style.display = state.shipping > 0 ? 'flex' : 'none';
+
+  document.getElementById('conf-payment').textContent = PAYMENT_LABELS[state.payment];
+
+  // 届け先
+  if (state.addressType === 'registered') {
+    document.getElementById('conf-address').textContent = '登録住所へお届け';
+  } else {
+    document.getElementById('conf-address').innerHTML =
+      `〒${state.altZip}<br>${state.altAddress}<br>` +
+      (state.altBuilding ? state.altBuilding + '<br>' : '') +
+      `${state.altName}　${state.altPhone}`;
+  }
+
+  // 特記事項
+  const rWrap = document.getElementById('conf-remarks-wrap');
+  if (state.remarks) {
+    rWrap.style.display = 'block';
+    document.getElementById('conf-remarks').textContent = state.remarks;
+  } else {
+    rWrap.style.display = 'none';
+  }
+}
+
+// ================================================================
+// 注文送信
+// ================================================================
+async function submitOrder() {
+  goPage(6); // ローディング表示
+
+  const orderData = {
+    lineUserId:   state.lineUserId,
+    memberNo:     state.memberNo,
+    memberName:   state.memberName,
+    products:     PRODUCTS.map((p, i) => ({
+      name: p.name, price: p.price, qty: state.quantities[i],
+      subtotal: p.price * state.quantities[i]
+    })).filter(p => p.qty > 0),
+    subtotal:     state.subtotal,
+    shipping:     state.shipping,
+    total:        state.total,
+    payment:      state.payment,
+    paymentLabel: PAYMENT_LABELS[state.payment],
+    addressType:  state.addressType,
+    altZip:       state.altZip,
+    altAddress:   state.altAddress,
+    altBuilding:  state.altBuilding,
+    altName:      state.altName,
+    altPhone:     state.altPhone,
+    remarks:      state.remarks,
+    orderDate:    new Date().toLocaleString('ja-JP'),
+  };
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(orderData),
+    });
+    const json = await res.json();
+    if (json.status === 'ok') {
+      goPage(7);
+      // 銀行振込の場合は振込先表示
+      if (state.payment === 'bank') {
+        document.getElementById('bankInfoDisplay').style.display = 'block';
+        document.getElementById('completeDesc').innerHTML =
+          'ご注文を受け付けました。<br>LINEに注文確認メッセージをお送りします。<br><br>下記の口座へお振込をお願いいたします。';
+      }
+    } else {
+      alert('送信に失敗しました。\n' + (json.message || 'しばらく経ってから再度お試しください。'));
+      goPage(5);
+    }
+  } catch(e) {
+    console.error('送信エラー:', e);
+    alert('通信エラーが発生しました。\nインターネット接続を確認のうえ、再度お試しください。');
+    goPage(5);
+  }
+}
+</script>
+</body>
+</html>
