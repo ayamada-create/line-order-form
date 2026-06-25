@@ -408,7 +408,7 @@
   <!-- 販促品カード -->
   <div class="card">
     <div class="card-title">🎁 販促品（任意）</div>
-    <div style="font-size:13px;color:var(--gray);margin-bottom:12px;">※販促品の金額は送料計算の対象外です</div>
+    <div style="font-size:13px;color:var(--gray);margin-bottom:12px;">※販促品のみのご注文の場合も送料¥890が発生します</div>
 
     <!-- 販促品1 -->
     <div class="product-item">
@@ -697,7 +697,7 @@ const PROMOS = [
   { name: 'ストーリーBOOK',          price: 200 },
 ];
 const SHIPPING_FEE   = 890;
-const FREE_SHIP_MIN  = 20000;  // 商品小計のみで判定（販促品除く）
+const FREE_SHIP_MIN  = 20000;  // 商品小計が¥20,000以上で送料無料（販促品のみ注文は送料あり）
 const NP_LIMIT       = 60000;
 const PAYMENT_LABELS = { credit: 'クレジットカード', bank: '銀行振込', np: 'NP後払い' };
 
@@ -821,10 +821,11 @@ function updateTotal() {
 
   // 商品小計（送料判定に使用）
   const subtotal = PRODUCTS.reduce((s, p, i) => s + p.price * qtys[i], 0);
-  // 販促品小計（送料計算に含まない）
+  // 販促品小計
   const promoSubtotal = PROMOS.reduce((s, p, i) => s + p.price * pqtys[i], 0);
-  // 送料：商品小計のみで判定
-  const shipping = subtotal > 0 && subtotal < FREE_SHIP_MIN ? SHIPPING_FEE : 0;
+  // 送料：商品小計が¥20,000未満 OR 販促品のみの注文 → ¥890追加
+  const hasOrder = subtotal > 0 || promoSubtotal > 0;
+  const shipping = hasOrder && subtotal < FREE_SHIP_MIN ? SHIPPING_FEE : 0;
   const total    = subtotal + shipping + promoSubtotal;
 
   state.subtotal      = subtotal;
