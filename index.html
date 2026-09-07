@@ -687,6 +687,7 @@
 // ================================================================
 const LIFF_ID = '2010475932-1iD1eu6x';          // LIFFアプリID
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxKRWYIaFhxxqk1yiu_q6oSc4DIOk4MgHUnFps0ilTne6lrEcqiKmw2MnqRlUB1BSHT5A/exec';  // GASデプロイURL
+const API_SECRET = '949cfdbabae1ba67c180543d4918cdb371b780349d1a60ee'; // GAS側の ORDER_API_SECRET と同じ値にすること
 
 // ================================================================
 // 商品マスター
@@ -1020,6 +1021,7 @@ async function submitOrder() {
   goPage(6); // ローディング表示
 
   const orderData = {
+    apiSecret:    API_SECRET,
     lineUserId:   state.lineUserId,
     memberNo:     state.memberNo,
     memberName:   state.memberName,
