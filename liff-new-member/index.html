@@ -197,9 +197,29 @@
   </div>
 </section>
 
+<!-- ============ P2 本人承諾 ============ -->
+<section class="page" data-step="2" data-label="ご本人による承諾">
+  <h2>2. ご本人による承諾</h2>
+  <div class="notice">
+    会員登録にあたり、以下の内容は<b>ご本人が承諾</b>してください。<br>
+    <b>他人による代理承諾はできません。</b>
+  </div>
+  <div class="card">
+    <ol style="margin:0;padding-left:1.4em;font-size:15px">
+      <li style="margin-bottom:10px">「概要書面」を受け取り、記載されている全ての項目を理解した上で登録し、特定商取引法・薬機法等の関連法規を遵守します。</li>
+      <li>「<a href="#" onclick="openUrl(CONFIG.PRIVACY_URL);return false;" style="color:#1a73e8;text-decoration:underline;font-weight:700">個人情報の取扱い</a>」の内容を理解し、同意します。
+        <div class="hint">※「個人情報の取扱い」をタップすると内容をご確認いただけます</div></li>
+    </ol>
+  </div>
+  <div class="card">
+    <label class="check"><input type="checkbox" id="consent"> 承諾しました</label>
+    <div class="errmsg" data-for="consent"></div>
+  </div>
+</section>
+
 <!-- ============ P2 ボーナス口座 ============ -->
-<section class="page" data-step="2" data-label="ボーナス受取口座">
-  <h2>2. ボーナス受取口座の登録</h2>
+<section class="page" data-step="3" data-label="ボーナス受取口座">
+  <h2>3. ボーナス受取口座の登録</h2>
   <div class="notice">口座は<b>お申込みされるご本人名義に限ります</b>。</div>
   <div class="card">
     <label class="check"><input type="checkbox" id="bonusRefuse"> ボーナスの受取を希望しない</label>
@@ -249,8 +269,8 @@
 </section>
 
 <!-- ============ P3 初回注文 ============ -->
-<section class="page" data-step="3" data-label="初回のご注文">
-  <h2>3. 初回のご注文</h2>
+<section class="page" data-step="4" data-label="初回のご注文">
+  <h2>4. 初回のご注文</h2>
   <div class="card">
     <div class="hint" style="margin-bottom:4px">価格はすべて税込です。数量を選んでください。</div>
     <div id="firstItems"></div>
@@ -261,8 +281,8 @@
 </section>
 
 <!-- ============ P4 定期購入 ============ -->
-<section class="page" data-step="4" data-label="翌月からの定期購入">
-  <h2>4. 翌月からの定期購入</h2>
+<section class="page" data-step="5" data-label="翌月からの定期購入">
+  <h2>5. 翌月からの定期購入</h2>
   <div class="pr">
     <b>定期購入がおトクです！</b>
     <ul>
@@ -299,8 +319,8 @@
 </section>
 
 <!-- ============ P5 お届け先 ============ -->
-<section class="page" data-step="5" data-label="お届け先">
-  <h2>5. お届け先</h2>
+<section class="page" data-step="6" data-label="お届け先">
+  <h2>6. お届け先</h2>
   <div class="card">
     <label class="fl">お届け先<span class="req">必須</span></label>
     <label class="choice"><input type="radio" name="shipTo" value="home"><div><div class="t">登録住所へ届ける</div><div class="d" id="homeAddrDesc"></div></div></label>
@@ -349,8 +369,8 @@
 </section>
 
 <!-- ============ P6 決済方法 ============ -->
-<section class="page" data-step="6" data-label="お支払い方法">
-  <h2>6. お支払い方法の選択</h2>
+<section class="page" data-step="7" data-label="お支払い方法">
+  <h2>7. お支払い方法の選択</h2>
   <div class="card">
     <h3 style="margin-top:0">初回購入のお支払い<span class="req">必須</span></h3>
     <div class="hint" id="firstPayTotal"></div>
@@ -371,14 +391,14 @@
 </section>
 
 <!-- ============ P7 確認 ============ -->
-<section class="page" data-step="7" data-label="入力内容の確認">
-  <h2>7. 入力内容のご確認</h2>
+<section class="page" data-step="8" data-label="入力内容の確認">
+  <h2>8. 入力内容のご確認</h2>
   <div class="info">内容をご確認のうえ、画面下の<b>「この内容で申し込む」</b>を押してください。</div>
   <div id="confirmArea"></div>
 </section>
 
 <!-- ============ P8 完了 ============ -->
-<section class="page" data-step="8" data-label="受付完了・お支払い手続き">
+<section class="page" data-step="9" data-label="受付完了・お支払い手続き">
   <div class="card" style="text-align:center">
     <div class="done-mark">✓</div>
     <div style="font-size:18px;font-weight:700;margin-top:6px">お申込みを受け付けました</div>
@@ -421,6 +441,7 @@ const CONFIG = {
   FURIKAE_URL: 'https://sslgw.jns-asp.jp/lifwell/webfurikae/',
   CARD_URL_BASE: 'https://sslgw.jns-asp.jp/lifwell/line_payment/',
   CREDIX_TEL: '03-4333-1717',
+  PRIVACY_URL: 'https://drive.google.com/file/d/1ES0cwGxwnxce7fenZCDNksTB7lGLA9Jw/view',
 };
 
 // 商品（初回・定期共通）※価格は税込。GAS側の PRODUCTS と必ず同じにしてください
@@ -671,7 +692,8 @@ function validate(page) {
     need('refName', '紹介者のお名前');
     if (!dateStr('refBirth')) errs.push(['refBirthY', '紹介者の生年月日を選択してください']);
   }
-  if (page === 2 && !$('bonusRefuse').checked) {
+  if (page === 2 && !$('consent').checked) errs.push(['consent', '内容をご確認のうえ「承諾しました」にチェックを入れてください']);
+  if (page === 3 && !$('bonusRefuse').checked) {
     const bt = radio('bankType');
     if (!bt) errs.push(['bankType', '金融機関を選択してください']);
     if (bt === 'yucho') {
@@ -683,15 +705,15 @@ function validate(page) {
       if (!/^\d{1,7}$/.test(v('accountNo'))) errs.push(['accountNo', '口座番号は7桁以内の数字で入力してください']);
     }
   }
-  if (page === 3 && firstCalc().subtotal === 0) errs.push(['firstItems', '商品を1点以上お選びください']);
-  if (page === 4) {
+  if (page === 4 && firstCalc().subtotal === 0) errs.push(['firstItems', '商品を1点以上お選びください']);
+  if (page === 5) {
     if (!radio('subscribe')) errs.push(['subscribe', '定期購入する・しないを選択してください']);
     if (radio('subscribe') === 'yes') {
       if (!radio('subSame')) errs.push(['subSame', '定期購入の内容を選択してください']);
       if (radio('subSame') === 'change' && calc(readQty('s')).subtotal === 0) errs.push(['subItems', '商品を1点以上お選びください']);
     }
   }
-  if (page === 5) {
+  if (page === 6) {
     if (!radio('shipTo')) errs.push(['shipTo', 'お届け先を選択してください']);
     if (radio('shipTo') === 'other') {
       if (!/^\d{7}$/.test(v('sZip'))) errs.push(['sZip', '郵便番号は7桁の数字で入力してください']);
@@ -699,7 +721,7 @@ function validate(page) {
       if (!TEL_RE.test(v('sTel').replace(/-/g, ''))) errs.push(['sTel', '電話番号を正しく入力してください']);
     }
   }
-  if (page === 6) {
+  if (page === 7) {
     if (!radio('payFirst')) errs.push(['payFirst', '初回購入のお支払い方法を選択してください']);
     else if (!checkNpLimit(false)) errs.push(['payFirst', `NP後払いでご利用いただける金額は${yen(CONFIG.NP_LIMIT)}までです。今回のご注文（${yen(firstCalc().total)}）は、お振込またはクレジットカードをお選びください。`]);
     if (radio('subscribe') === 'yes' && !radio('paySub')) errs.push(['paySub', '定期購入のお支払い方法を選択してください']);
@@ -716,10 +738,10 @@ function validate(page) {
 function prevPage(p) { return p - 1; }
 function onNext() {
   const p = state.page;
-  if (p === 7) { submit(); return; }
+  if (p === 8) { submit(); return; }
   clearAllErr(pages[p - 1]);
   if (!validate(p)) return;
-  if (p === 1) { $('bankHolder').value = v('lastKana') + ' ' + v('firstKana'); }
+  if (p === 2) { $('bankHolder').value = v('lastKana') + ' ' + v('firstKana'); }
   showPage(p + 1);
 }
 function showPage(n) {
@@ -728,17 +750,17 @@ function showPage(n) {
   document.querySelectorAll('#progress span').forEach((s, i) => s.classList.toggle('on', i < n));
   $('steplabel').textContent = `ステップ ${n} / ${TOTAL_STEPS}　${pages[n - 1].dataset.label}`;
   $('backBtn').classList.toggle('hidden', n === 1);
-  $('navbar').classList.toggle('hidden', n === 8);
-  $('nextBtn').textContent = n === 7 ? 'この内容で申し込む' : '次へ';
-  if (n === 4) updateSubSum();
-  if (n === 5) $('homeAddrDesc').textContent = `〒${v('zip')} ${v('addr1')}${v('addr2')} ${v('addr3')}`;
-  if (n === 6) {
+  $('navbar').classList.toggle('hidden', n === 9);
+  $('nextBtn').textContent = n === 8 ? 'この内容で申し込む' : '次へ';
+  if (n === 5) updateSubSum();
+  if (n === 6) $('homeAddrDesc').textContent = `〒${v('zip')} ${v('addr1')}${v('addr2')} ${v('addr3')}`;
+  if (n === 7) {
     const f = firstCalc(), s = subCalc();
     $('firstPayTotal').textContent = `初回のお支払い合計：${yen(f.total)}`;
     $('paySubCard').classList.toggle('hidden', !s);
     if (s) $('subPayTotal').textContent = `毎月のお支払い合計：${yen(s.total)}`;
   }
-  if (n === 7) renderConfirm();
+  if (n === 8) renderConfirm();
   window.scrollTo(0, 0);
 }
 
@@ -748,6 +770,7 @@ function collect() {
   const f = firstCalc(), s = subCalc();
   return {
     authCode: v('authCode'),
+    consent: $('consent').checked,
     member: {
       lastName: v('lastName'), firstName: v('firstName'), lastKana: v('lastKana'), firstKana: v('firstKana'),
       nickname: $('useNickname').checked ? v('nickname') : '', birth: dateStr('birth'), gender: $('gender').value,
@@ -792,17 +815,18 @@ function renderConfirm() {
     ['住所', `〒${m.zip} ${m.addr1}${m.addr2} ${m.addr3}`], ['電話番号', m.tel],
   ]));
   h += block('ご紹介者', 1, tbl([['会員番号', r.id], ['お名前', r.name], ['生年月日', r.birth]]));
-  h += block('ボーナス受取口座', 2, b.refuse ? tbl([['受取', '受取を希望しない']]) :
+  h += block('ご本人による承諾', 2, tbl([['概要書面・関連法規の遵守', '承諾済'], ['個人情報の取扱い', '同意済']]));
+  h += block('ボーナス受取口座', 3, b.refuse ? tbl([['受取', '受取を希望しない']]) :
     tbl(b.type === 'ゆうちょ銀行'
       ? [['金融機関', 'ゆうちょ銀行'], ['記号', b.yuchoKigo], ['番号', b.yuchoBango], ['名義', b.holderKana]]
       : [['金融機関', b.bankName], ['支店', b.branchName], ['種別', b.accountType], ['口座番号', b.accountNo], ['名義', b.holderKana]]));
-  h += block('初回のご注文', 3, orderTbl(f));
-  h += block('翌月からの定期購入', 4, s ? (d.subscription.same ? '<div class="hint">初回と同じ内容</div>' : '') + orderTbl(s) : tbl([['定期購入', 'しない']]));
+  h += block('初回のご注文', 4, orderTbl(f));
+  h += block('翌月からの定期購入', 5, s ? (d.subscription.same ? '<div class="hint">初回と同じ内容</div>' : '') + orderTbl(s) : tbl([['定期購入', 'しない']]));
   const sh = d.shipping;
-  h += block('お届け先', 5, tbl(sh.type === '登録住所'
+  h += block('お届け先', 6, tbl(sh.type === '登録住所'
     ? [['お届け先', '登録住所'], ['配達希望時間帯', d.deliveryTime], ['特記事項', d.memo]]
     : [['お届け先', '別送先'], ['住所', `〒${sh.zip} ${sh.addr1}${sh.addr2} ${sh.addr3}`], ['お名前', sh.name], ['電話番号', sh.tel], ['配達希望時間帯', d.deliveryTime], ['特記事項', d.memo]]));
-  h += block('お支払い方法', 6, tbl([['初回購入', d.payment.first]].concat(s ? [['定期購入', d.payment.sub]] : [])));
+  h += block('お支払い方法', 7, tbl([['初回購入', d.payment.first]].concat(s ? [['定期購入', d.payment.sub]] : [])));
   $('confirmArea').innerHTML = h;
 }
 
@@ -825,7 +849,7 @@ async function submit() {
     if (!res.ok) throw new Error(res.message || '送信に失敗しました');
     state.orderNo = res.orderNo;
     renderDone(payload.data);
-    showPage(8);
+    showPage(9);
   } catch (e) {
     alert('送信できませんでした。電波の良い場所でもう一度「この内容で申し込む」を押してください。\n\n' + (e.message || e) +
       `\n\n解決しない場合は注文センター（${CONFIG.ORDER_CENTER_TEL}）へご連絡ください。`);
