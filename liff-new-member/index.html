@@ -815,7 +815,7 @@ async function submit() {
   const payload = { requestId: state.requestId, idToken: state.idToken, lineUserId: state.lineUserId, lineName: state.lineName, data: collect() };
   try {
     let res;
-    if (!CONFIG.GAS_URL) {
+    if (!CONFIG.GAS_URL || MOCK) {
       await new Promise(r => setTimeout(r, 600));
       res = { ok: true, orderNo: '20260919-001' };
     } else {
