@@ -207,9 +207,12 @@
   <div class="card">
     <ol style="margin:0;padding-left:1.4em;font-size:15px">
       <li style="margin-bottom:10px">「概要書面」を受け取り、記載されている全ての項目を理解した上で登録し、特定商取引法・薬機法等の関連法規を遵守します。</li>
-      <li>「<a href="#" onclick="openUrl(CONFIG.PRIVACY_URL);return false;" style="color:#1a73e8;text-decoration:underline;font-weight:700">個人情報の取扱い</a>」の内容を理解し、同意します。
-        <div class="hint">※「個人情報の取扱い」をタップすると内容をご確認いただけます</div></li>
+      <li>「個人情報の取扱い」の内容を理解し、同意します。</li>
     </ol>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid #eee">
+      <a href="#" onclick="openUrl(CONFIG.TOKUSHOHO_URL);return false;" style="color:#1a73e8;text-decoration:underline;font-weight:700">「特定商取引法に基づく表記」を確認する</a>
+      <div class="hint">※タップすると内容をご確認いただけます</div>
+    </div>
   </div>
   <div class="card">
     <label class="check"><input type="checkbox" id="consent"> 承諾しました</label>
@@ -441,7 +444,7 @@ const CONFIG = {
   FURIKAE_URL: 'https://sslgw.jns-asp.jp/lifwell/webfurikae/',
   CARD_URL_BASE: 'https://sslgw.jns-asp.jp/lifwell/line_payment/',
   CREDIX_TEL: '03-4333-1717',
-  PRIVACY_URL: 'https://drive.google.com/file/d/1ES0cwGxwnxce7fenZCDNksTB7lGLA9Jw/view',
+  TOKUSHOHO_URL: 'https://drive.google.com/file/d/1ES0cwGxwnxce7fenZCDNksTB7lGLA9Jw/view',
 };
 
 // 商品（初回・定期共通）※価格は税込。GAS側の PRODUCTS と必ず同じにしてください
