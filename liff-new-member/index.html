@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>LIFWELL 新規会員登録・ご注文</title>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{
+    --green:#06C755; --green-d:#05a647; --green-l:#e8f9ef;
+    --text:#222; --sub:#666; --line:#ddd; --bg:#f5f6f7;
+    --err:#d93025; --warn-bg:#fff8e1; --warn:#8a6100; --info-bg:#eef4ff; --info:#1a4fa0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+    font-size:16px;line-height:1.6;-webkit-text-size-adjust:100%}
+  header{background:var(--green);color:#fff;padding:12px 16px;position:sticky;top:0;z-index:10}
+  header h1{margin:0;font-size:17px;font-weight:700}
+  .progress{display:flex;gap:4px;margin-top:8px}
+  .progress span{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.35)}
+  .progress span.on{background:#fff}
+  .steplabel{font-size:12px;margin-top:4px;opacity:.95}
+  main{max-width:560px;margin:0 auto;padding:16px 16px 120px}
+  .page{display:none}
+  .page.active{display:block}
+  h2{font-size:19px;margin:4px 0 12px;border-left:5px solid var(--green);padding-left:10px}
+  h3{font-size:16px;margin:20px 0 8px;color:var(--green-d)}
+  .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  label.fl{display:block;font-weight:700;font-size:15px;margin:14px 0 6px}
+  label.fl:first-child{margin-top:0}
+  .req{display:inline-block;background:var(--err);color:#fff;font-size:11px;border-radius:3px;padding:0 5px;margin-left:6px;vertical-align:2px;font-weight:700}
+  .opt{display:inline-block;background:#999;color:#fff;font-size:11px;border-radius:3px;padding:0 5px;margin-left:6px;vertical-align:2px;font-weight:700}
+  input[type=text],input[type=tel],select,textarea{
+    width:100%;font-size:17px;padding:11px 12px;border:1.5px solid #ccc;border-radius:8px;background:#fff;color:var(--text);
+    -webkit-appearance:none;appearance:none}
+  select{background-image:linear-gradient(45deg,transparent 50%,#888 50%),linear-gradient(135deg,#888 50%,transparent 50%);
+    background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:30px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(6,199,85,.18)}
+  input.ng,select.ng,textarea.ng{border-color:var(--err);background:#fff6f5}
+  input:disabled,select:disabled{background:#eee;color:#999}
+  .row{display:flex;gap:8px}
+  .row>*{flex:1;min-width:0}
+  .row .w-auto{flex:0 0 auto}
+  .hint{font-size:13px;color:var(--sub);margin-top:4px}
+  .errmsg{color:var(--err);font-size:13px;margin-top:4px;display:none}
+  .errmsg.show{display:block}
+  .notice{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:14px;margin:10px 0}
+  .info{background:var(--info-bg);color:var(--info);border-radius:8px;padding:10px 12px;font-size:14px;margin:10px 0}
+  .pr{background:var(--green-l);border:2px solid var(--green);border-radius:12px;padding:14px;margin-bottom:14px}
+  .pr b{color:var(--green-d)}
+  .pr ul{margin:6px 0 0;padding-left:20px}
+  .btn{display:block;width:100%;font-size:17px;font-weight:700;padding:14px;border-radius:10px;border:none;cursor:pointer;text-align:center;text-decoration:none}
+  .btn-main{background:var(--green);color:#fff}
+  .btn-main:active{background:var(--green-d)}
+  .btn-main:disabled{background:#9dd9b4}
+  .btn-sub{background:#fff;color:var(--text);border:1.5px solid #bbb}
+  .btn-link{background:#1a73e8;color:#fff;margin:8px 0}
+  .navbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;z-index:10}
+  .navbar .btn{padding:13px}
+  .navbar .btn-sub{flex:0 0 32%}
+  .choice{display:flex;align-items:flex-start;gap:10px;border:1.5px solid #ccc;border-radius:10px;padding:12px;margin:8px 0;background:#fff;cursor:pointer}
+  .choice input{width:22px;height:22px;margin:2px 0 0;flex:0 0 auto;accent-color:var(--green)}
+  .choice.sel{border-color:var(--green);background:var(--green-l)}
+  .choice .t{font-weight:700}
+  .choice .d{font-size:13px;color:var(--sub)}
+  .badge{display:inline-block;background:#ff8f00;color:#fff;font-size:11px;border-radius:3px;padding:0 6px;margin-left:6px;vertical-align:2px}
+  .prod{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #eee}
+  .prod:last-child{border-bottom:none}
+  .prod .nm{flex:1;font-weight:700;font-size:15px}
+  .prod .pc{font-size:14px;color:var(--sub);font-weight:400}
+  .prod select{width:86px;flex:0 0 86px}
+  .sum{margin-top:10px;border-top:2px solid #eee;padding-top:10px}
+  .sum div{display:flex;justify-content:space-between;font-size:15px;padding:2px 0}
+  .sum .total{font-size:19px;font-weight:700;color:var(--green-d)}
+  .ship-note{font-size:13px;color:var(--sub)}
+  table.cf{width:100%;border-collapse:collapse;font-size:14px}
+  table.cf th{text-align:left;color:var(--sub);font-weight:400;width:38%;padding:6px 8px 6px 0;vertical-align:top;border-bottom:1px solid #f0f0f0}
+  table.cf td{padding:6px 0;border-bottom:1px solid #f0f0f0;word-break:break-all}
+  .cf-head{display:flex;justify-content:space-between;align-items:center}
+  .cf-head a{font-size:13px;color:#1a73e8;text-decoration:underline;cursor:pointer}
+  .check{display:flex;align-items:center;gap:10px;font-weight:700;margin:6px 0}
+  .check input{width:22px;height:22px;accent-color:var(--green)}
+  .bankbox{border:1px dashed #bbb;border-radius:8px;padding:12px;margin-top:8px;font-size:15px;background:#fafafa}
+  .done-mark{text-align:center;font-size:52px;color:var(--green);line-height:1}
+  .orderno{text-align:center;font-size:24px;font-weight:700;letter-spacing:1px;margin:6px 0}
+  .overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:50;font-weight:700}
+  .overlay.show{display:flex}
+  .spinner{width:44px;height:44px;border:5px solid #cfeedd;border-top-color:var(--green);border-radius:50%;animation:sp 1s linear infinite;margin-bottom:12px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .hidden{display:none!important}
+  .tel{font-weight:700;font-size:18px}
+  a.tel{color:#1a73e8}
+</style>
+</head>
+<body>
+<header>
+  <h1>LIFWELL 新規会員登録・ご注文</h1>
+  <div class="progress" id="progress"></div>
+  <div class="steplabel" id="steplabel"></div>
+</header>
+
+<main>
+<!-- ============ P1 会員情報 ============ -->
+<section class="page active" data-step="1" data-label="会員情報のご入力">
+  <h2>1. 会員情報のご入力</h2>
+  <div class="notice">
+    お手元に<b>「概要書面」</b>をご用意ください。<br>
+    法人でのご登録をご希望の方は、<b>注文センター（<a class="tel" href="tel:08005556777">0800-555-6777</a>）</b>へご連絡ください。
+  </div>
+
+  <div class="card">
+    <label class="fl">認証番号（6桁）<span class="req">必須</span></label>
+    <input type="tel" id="authCode" inputmode="numeric" maxlength="6" placeholder="例）123456">
+    <div class="hint">概要書面の右上に記載されている6桁の番号です</div>
+    <div class="errmsg" data-for="authCode"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">新規会員のお客様情報</h3>
+    <label class="fl">お名前<span class="req">必須</span></label>
+    <div class="row">
+      <input type="text" id="lastName" placeholder="姓（例：山田）" autocomplete="family-name">
+      <input type="text" id="firstName" placeholder="名（例：花子）" autocomplete="given-name">
+    </div>
+    <div class="errmsg" data-for="lastName"></div><div class="errmsg" data-for="firstName"></div>
+
+    <label class="fl">フリガナ<span class="req">必須</span></label>
+    <div class="row">
+      <input type="text" id="lastKana" placeholder="セイ（例：ヤマダ）" class="kana">
+      <input type="text" id="firstKana" placeholder="メイ（例：ハナコ）" class="kana">
+    </div>
+    <div class="errmsg" data-for="lastKana"></div><div class="errmsg" data-for="firstKana"></div>
+
+    <label class="check" style="margin-top:14px"><input type="checkbox" id="useNickname"> ニックネームの使用を希望する</label>
+    <div id="nicknameBox" class="hidden">
+      <label class="fl">ニックネーム<span class="req">必須</span></label>
+      <input type="text" id="nickname" placeholder="ご希望のニックネーム">
+      <div class="errmsg" data-for="nickname"></div>
+    </div>
+
+    <label class="fl">生年月日<span class="req">必須</span></label>
+    <div class="row">
+      <select id="birthY"></select>
+      <select id="birthM" class="w-auto" style="width:84px"></select>
+      <select id="birthD" class="w-auto" style="width:84px"></select>
+    </div>
+    <div class="errmsg" data-for="birthY"></div>
+
+    <label class="fl">性別<span class="req">必須</span></label>
+    <select id="gender">
+      <option value="">選択してください</option>
+      <option value="男性">男性</option>
+      <option value="女性">女性</option>
+    </select>
+    <div class="errmsg" data-for="gender"></div>
+
+    <label class="fl">郵便番号<span class="req">必須</span></label>
+    <input type="tel" id="zip" inputmode="numeric" maxlength="8" placeholder="例）1234567（ハイフンなし）">
+    <div class="hint">入力すると住所が自動で表示されます</div>
+    <div class="errmsg" data-for="zip"></div>
+
+    <label class="fl">住所（都道府県・市区町村・町名）<span class="req">必須</span></label>
+    <input type="text" id="addr1" placeholder="郵便番号から自動入力されます">
+    <div class="errmsg" data-for="addr1"></div>
+
+    <label class="fl">番地<span class="req">必須</span></label>
+    <input type="text" id="addr2" placeholder="例）1-2-3">
+    <div class="errmsg" data-for="addr2"></div>
+    <label class="fl">マンション名・号室<span class="opt">任意</span></label>
+    <input type="text" id="addr3" placeholder="例）リフウェルマンション101号室">
+    <div class="hint">一戸建ての場合は空欄で結構です</div>
+
+    <label class="fl">電話番号<span class="req">必須</span></label>
+    <input type="tel" id="tel" inputmode="tel" placeholder="例）09012345678">
+    <div class="errmsg" data-for="tel"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">ご紹介者の情報</h3>
+    <label class="fl">紹介者の会員番号<span class="req">必須</span></label>
+    <input type="tel" id="refId" inputmode="numeric" placeholder="数字のみ">
+    <div class="errmsg" data-for="refId"></div>
+
+    <label class="fl">紹介者のお名前<span class="req">必須</span></label>
+    <input type="text" id="refName" placeholder="例）鈴木 一郎">
+    <div class="errmsg" data-for="refName"></div>
+
+    <label class="fl">紹介者の生年月日<span class="req">必須</span></label>
+    <div class="row">
+      <select id="refBirthY"></select>
+      <select id="refBirthM" class="w-auto" style="width:84px"></select>
+      <select id="refBirthD" class="w-auto" style="width:84px"></select>
+    </div>
+    <div class="errmsg" data-for="refBirthY"></div>
+
+  </div>
+</section>
+
+<!-- ============ P2 ボーナス口座 ============ -->
+<section class="page" data-step="2" data-label="ボーナス受取口座">
+  <h2>2. ボーナス受取口座の登録</h2>
+  <div class="notice">口座は<b>お申込みされるご本人名義に限ります</b>。</div>
+  <div class="card">
+    <label class="check"><input type="checkbox" id="bonusRefuse"> ボーナスの受取を希望しない</label>
+    <div class="hint">チェックした場合、口座の入力は不要です</div>
+  </div>
+
+  <div id="bankArea">
+    <div class="card">
+      <label class="fl">口座名義（カナ）</label>
+      <input type="text" id="bankHolder" disabled>
+      <div class="hint">ご本人のフリガナが自動で入ります</div>
+
+      <label class="fl">金融機関<span class="req">必須</span></label>
+      <label class="choice"><input type="radio" name="bankType" value="yucho"><div><div class="t">ゆうちょ銀行</div></div></label>
+      <label class="choice"><input type="radio" name="bankType" value="other"><div><div class="t">その他の金融機関</div><div class="d">銀行・信用金庫・農協など</div></div></label>
+      <div class="errmsg" data-for="bankType"></div>
+    </div>
+
+    <div class="card hidden" id="yuchoBox">
+      <label class="fl">記号（5桁）<span class="req">必須</span></label>
+      <input type="tel" id="yuchoKigo" inputmode="numeric" maxlength="5" placeholder="例）10050">
+      <div class="errmsg" data-for="yuchoKigo"></div>
+      <label class="fl">番号（最大8桁）<span class="req">必須</span></label>
+      <input type="tel" id="yuchoBango" inputmode="numeric" maxlength="8" placeholder="例）12345671">
+      <div class="errmsg" data-for="yuchoBango"></div>
+    </div>
+
+    <div class="card hidden" id="otherBankBox">
+      <label class="fl">銀行名<span class="req">必須</span></label>
+      <input type="text" id="bankName" placeholder="例）三井住友銀行">
+      <div class="errmsg" data-for="bankName"></div>
+      <label class="fl">支店名<span class="req">必須</span></label>
+      <input type="text" id="branchName" placeholder="例）新宿支店">
+      <div class="errmsg" data-for="branchName"></div>
+      <label class="fl">口座種別<span class="req">必須</span></label>
+      <select id="accountType">
+        <option value="">選択してください</option>
+        <option value="普通">普通</option>
+        <option value="当座">当座</option>
+      </select>
+      <div class="errmsg" data-for="accountType"></div>
+      <label class="fl">口座番号（7桁）<span class="req">必須</span></label>
+      <input type="tel" id="accountNo" inputmode="numeric" maxlength="7" placeholder="例）1234567">
+      <div class="errmsg" data-for="accountNo"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ P3 初回注文 ============ -->
+<section class="page" data-step="3" data-label="初回のご注文">
+  <h2>3. 初回のご注文</h2>
+  <div class="card">
+    <div class="hint" style="margin-bottom:4px">価格はすべて税込です。数量を選んでください。</div>
+    <div id="firstItems"></div>
+    <div class="sum" id="firstSum"></div>
+    <div class="ship-note">※商品合計が20,000円未満の場合、送料890円がかかります</div>
+    <div class="errmsg" data-for="firstItems"></div>
+  </div>
+</section>
+
+<!-- ============ P4 定期購入 ============ -->
+<section class="page" data-step="4" data-label="翌月からの定期購入">
+  <h2>4. 翌月からの定期購入</h2>
+  <div class="pr">
+    <b>定期購入がおトクです！</b>
+    <ul>
+      <li>毎月自動でお届けします</li>
+      <li><b>3ヶ月連続</b>の定期購入で、<b>4ヶ月目にカラダリケア10包をプレゼント</b></li>
+      <li>定期購入は<b>キャッシュバック（ボーナス）を受けるための条件</b>です</li>
+    </ul>
+  </div>
+  <div class="card">
+    <label class="fl">定期購入<span class="req">必須</span></label>
+    <label class="choice"><input type="radio" name="subscribe" value="yes"><div><div class="t">定期購入する<span class="badge">おすすめ</span></div></div></label>
+    <label class="choice"><input type="radio" name="subscribe" value="no"><div><div class="t">定期購入しない</div></div></label>
+    <div class="errmsg" data-for="subscribe"></div>
+  </div>
+
+  <div id="subArea" class="hidden">
+    <div class="card">
+      <label class="fl">定期購入の内容<span class="req">必須</span></label>
+      <label class="choice"><input type="radio" name="subSame" value="same"><div><div class="t">初回のご注文と同じ内容</div><div class="d" id="subSameDesc"></div></div></label>
+      <label class="choice"><input type="radio" name="subSame" value="change"><div><div class="t">内容を変える</div></div></label>
+      <div class="errmsg" data-for="subSame"></div>
+    </div>
+    <div class="card hidden" id="subItemsCard">
+      <div class="hint" style="margin-bottom:4px">価格はすべて税込です。数量を選んでください。</div>
+      <div id="subItems"></div>
+      <div class="sum" id="subSum"></div>
+      <div class="ship-note">※商品合計が20,000円未満の場合、送料890円がかかります</div>
+      <div class="errmsg" data-for="subItems"></div>
+    </div>
+    <div class="card" id="subSameSumCard">
+      <div class="sum" id="subSameSum" style="margin-top:0;border-top:none;padding-top:0"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ P5 お届け先 ============ -->
+<section class="page" data-step="5" data-label="お届け先">
+  <h2>5. お届け先</h2>
+  <div class="card">
+    <label class="fl">お届け先<span class="req">必須</span></label>
+    <label class="choice"><input type="radio" name="shipTo" value="home"><div><div class="t">登録住所へ届ける</div><div class="d" id="homeAddrDesc"></div></div></label>
+    <label class="choice"><input type="radio" name="shipTo" value="other"><div><div class="t">別の住所へ届ける</div></div></label>
+    <div class="errmsg" data-for="shipTo"></div>
+  </div>
+
+  <div class="card hidden" id="shipOtherBox">
+    <label class="fl">郵便番号<span class="req">必須</span></label>
+    <input type="tel" id="sZip" inputmode="numeric" maxlength="8" placeholder="例）1234567（ハイフンなし）">
+    <div class="errmsg" data-for="sZip"></div>
+    <label class="fl">住所（都道府県・市区町村・町名）<span class="req">必須</span></label>
+    <input type="text" id="sAddr1" placeholder="郵便番号から自動入力されます">
+    <div class="errmsg" data-for="sAddr1"></div>
+    <label class="fl">番地<span class="req">必須</span></label>
+    <input type="text" id="sAddr2" placeholder="例）1-2-3">
+    <div class="errmsg" data-for="sAddr2"></div>
+    <label class="fl">マンション名・号室<span class="opt">任意</span></label>
+    <input type="text" id="sAddr3" placeholder="例）リフウェルマンション101号室">
+    <div class="hint">一戸建ての場合は空欄で結構です</div>
+    <label class="fl">お届け先のお名前<span class="req">必須</span></label>
+    <input type="text" id="sName" placeholder="例）山田 太郎">
+    <div class="errmsg" data-for="sName"></div>
+    <label class="fl">お届け先の電話番号<span class="req">必須</span></label>
+    <input type="tel" id="sTel" inputmode="tel" placeholder="例）09012345678">
+    <div class="errmsg" data-for="sTel"></div>
+  </div>
+
+  <div class="card">
+    <label class="fl">配達希望時間帯<span class="req">必須</span></label>
+    <select id="deliveryTime">
+      <option value="指定しない">指定しない</option>
+      <option value="午前中（8:00～12:00）">午前中（8:00 ～ 12:00）</option>
+      <option value="14:00～16:00">14:00 ～ 16:00</option>
+      <option value="16:00～18:00">16:00 ～ 18:00</option>
+      <option value="18:00～20:00">18:00 ～ 20:00</option>
+      <option value="19:00～21:00">19:00 ～ 21:00</option>
+    </select>
+    <div class="hint">初回・定期購入ともにこの時間帯でお届けします</div>
+  </div>
+
+  <div class="card">
+    <label class="fl">特記事項<span class="opt">任意</span></label>
+    <textarea id="memo" rows="3" placeholder="その他ご要望など"></textarea>
+  </div>
+</section>
+
+<!-- ============ P6 決済方法 ============ -->
+<section class="page" data-step="6" data-label="お支払い方法">
+  <h2>6. お支払い方法の選択</h2>
+  <div class="card">
+    <h3 style="margin-top:0">初回購入のお支払い<span class="req">必須</span></h3>
+    <div class="hint" id="firstPayTotal"></div>
+    <label class="choice"><input type="radio" name="payFirst" value="振込"><div><div class="t">お振込<span class="badge">推奨</span></div><div class="d">ご注文後、振込先をご案内します。</div></div></label>
+    <label class="choice"><input type="radio" name="payFirst" value="NP後払い"><div><div class="t">NP後払い</div><div class="d">PayPayなど、コンビニ・銀行・郵便局でお支払い</div></div></label>
+    <label class="choice"><input type="radio" name="payFirst" value="クレジットカード"><div><div class="t">クレジットカード</div></div></label>
+    <div class="notice hidden" id="npNotice">「NP後払い」は決済の度に、株式会社ネットプロテクションズの審査があり決済ができないことがあります。その場合には他の決済方法をお願いする場合があります。</div>
+    <div class="errmsg" data-for="payFirst"></div>
+  </div>
+
+  <div class="card" id="paySubCard">
+    <h3 style="margin-top:0">定期購入のお支払い<span class="req">必須</span></h3>
+    <div class="hint" id="subPayTotal"></div>
+    <label class="choice"><input type="radio" name="paySub" value="口座振替"><div><div class="t">口座振替<span class="badge">推奨</span></div></div></label>
+    <label class="choice"><input type="radio" name="paySub" value="クレジットカード"><div><div class="t">クレジットカード</div></div></label>
+    <div class="errmsg" data-for="paySub"></div>
+  </div>
+</section>
+
+<!-- ============ P7 確認 ============ -->
+<section class="page" data-step="7" data-label="入力内容の確認">
+  <h2>7. 入力内容のご確認</h2>
+  <div class="info">内容をご確認のうえ、画面下の<b>「この内容で申し込む」</b>を押してください。</div>
+  <div id="confirmArea"></div>
+</section>
+
+<!-- ============ P8 完了 ============ -->
+<section class="page" data-step="8" data-label="受付完了・お支払い手続き">
+  <div class="card" style="text-align:center">
+    <div class="done-mark">✓</div>
+    <div style="font-size:18px;font-weight:700;margin-top:6px">お申込みを受け付けました</div>
+    <div class="hint">注文番号</div>
+    <div class="orderno" id="doneOrderNo"></div>
+    <div class="hint">ご登録内容とご注文内容をLINEでお送りしました</div>
+  </div>
+  <div class="info" id="doneReassure">
+    <b>会員登録とご注文に必要な情報のご登録は完了しています。</b><br>
+    <span id="doneReassureSub">残りは下記のお支払い手続き（決済会社でのお手続き）のみです。うまくいかなかった場合も、ご登録内容は失われませんのでご安心ください。</span>
+  </div>
+  <div id="doneGuides"></div>
+  <div class="card">
+    <h3 style="margin-top:0">ご不明な点がある場合</h3>
+    お支払い方法やお手続きが分からない場合は、注文センターへご連絡ください。ご案内いたします。<br>
+    <a class="tel" href="tel:08005556777">注文センター 0800-555-6777</a>
+  </div>
+  <button class="btn btn-sub" id="closeBtn" type="button">画面を閉じる</button>
+</section>
+</main>
+
+<div class="navbar" id="navbar">
+  <button class="btn btn-sub" id="backBtn" type="button">戻る</button>
+  <button class="btn btn-main" id="nextBtn" type="button">次へ</button>
+</div>
+
+<div class="overlay" id="overlay"><div class="spinner"></div><div id="overlayMsg">読み込み中…</div></div>
+
+<script>
+/* =====================================================================
+ *  設定（ここだけ書き換えてください）
+ * ===================================================================== */
+const CONFIG = {
+  LIFF_ID: '2010475932-7ajrPben',          // 例）'2000000000-AbCdEfGh'
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbwBr_Ry_Y1zRDaNc1-GOyV36mn3UIGZFyoSDa6bC9-Jec_dmuIwJdeDD0PB_rfzSmCc/exec',          // 例）'https://script.google.com/macros/s/XXXXXXXX/exec'
+  ORDER_CENTER_TEL: '0800-555-6777',
+  SHIPPING_FEE: 890,
+  FREE_SHIPPING_THRESHOLD: 20000,
+  NP_LIMIT: 60000,
+  FURIKAE_URL: 'https://sslgw.jns-asp.jp/lifwell/webfurikae/',
+  CARD_URL_BASE: 'https://sslgw.jns-asp.jp/lifwell/line_payment/',
+  CREDIX_TEL: '03-4333-1717',
+};
+
+// 商品（初回・定期共通）※価格は税込。GAS側の PRODUCTS と必ず同じにしてください
+const PRODUCTS = [
+  { code: 'KARADA',  name: 'カラダリケア',               price: 13930, max: 5 },
+  { code: 'KANKA2',  name: 'カンカカプセル1セット(2袋)', price: 13930, max: 5 },
+  { code: 'KANKA1',  name: 'カンカカプセル単品',         price: 7500,  max: 1 },
+  { code: 'RICHGEL', name: 'リッチジェル',               price: 13930, max: 5 },
+];
+// 販促品（定期購入の「内容を変える」時のみ表示）。決まったら追加してください。GAS側にも同じ内容を追加。
+// 例）{ code: 'PROMO1', name: '販促品A', price: 1100, max: 5 },
+const PROMO_ITEMS = [];
+
+/* ===================================================================== */
+const MOCK = !CONFIG.LIFF_ID || new URLSearchParams(location.search).has('mock');
+const state = { page: 1, lineUserId: '', lineName: '', idToken: '', orderNo: '', requestId: '' };
+const $ = (id) => document.getElementById(id);
+const yen = (n) => n.toLocaleString('ja-JP') + '円';
+const pages = [...document.querySelectorAll('.page')];
+const TOTAL_STEPS = pages.length;
+
+/* ---------- 初期化 ---------- */
+window.addEventListener('DOMContentLoaded', async () => {
+  buildProgress();
+  buildDateSelects('birth');
+  buildDateSelects('refBirth');
+  buildItems('firstItems', PRODUCTS, 'f');
+  buildItems('subItems', PRODUCTS.concat(PROMO_ITEMS), 's');
+  bindEvents();
+  state.requestId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+  updateFirstSum(); updateSubSum();
+  showPage(1);
+
+  if (MOCK) { state.lineUserId = 'MOCK_USER'; state.lineName = 'テスト'; return; }
+  showOverlay('読み込み中…');
+  try {
+    await liff.init({ liffId: CONFIG.LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+    const prof = await liff.getProfile();
+    state.lineUserId = prof.userId;
+    state.lineName = prof.displayName;
+    state.idToken = liff.getIDToken() || '';
+  } catch (e) {
+    alert('LINEとの連携に失敗しました。LINEアプリから開き直してください。\n' + e);
+  } finally { hideOverlay(); }
+});
+
+function buildProgress() {
+  const p = $('progress');
+  for (let i = 1; i <= TOTAL_STEPS; i++) p.appendChild(document.createElement('span'));
+}
+
+function wareki(y) {
+  if (y >= 2019) return '令和' + (y - 2018 === 1 ? '元' : y - 2018);
+  if (y >= 1989) return '平成' + (y - 1988 === 1 ? '元' : y - 1988);
+  return '昭和' + (y - 1925 === 1 ? '元' : y - 1925);
+}
+function buildDateSelects(prefix) {
+  const ys = $(prefix + 'Y'), ms = $(prefix + 'M'), ds = $(prefix + 'D');
+  const now = new Date().getFullYear();
+  ys.innerHTML = '<option value="">年</option>';
+  for (let y = now - 18; y >= 1920; y--) ys.innerHTML += `<option value="${y}">${y}年（${wareki(y)}年）</option>`;
+  ms.innerHTML = '<option value="">月</option>';
+  for (let m = 1; m <= 12; m++) ms.innerHTML += `<option value="${m}">${m}月</option>`;
+  const fillDays = () => {
+    const keep = ds.value;
+    const y = +ys.value || 2000, m = +ms.value || 1;
+    const last = new Date(y, m, 0).getDate();
+    ds.innerHTML = '<option value="">日</option>';
+    for (let d = 1; d <= last; d++) ds.innerHTML += `<option value="${d}">${d}日</option>`;
+    if (keep && +keep <= last) ds.value = keep;
+  };
+  ys.addEventListener('change', fillDays); ms.addEventListener('change', fillDays);
+  fillDays();
+}
+function dateStr(prefix) {
+  const y = $(prefix + 'Y').value, m = $(prefix + 'M').value, d = $(prefix + 'D').value;
+  if (!y || !m || !d) return '';
+  return `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`;
+}
+
+function buildItems(containerId, items, key) {
+  const c = $(containerId);
+  c.innerHTML = items.map(p => {
+    let opts = '';
+    for (let i = 0; i <= p.max; i++) opts += `<option value="${i}">${i}</option>`;
+    return `<div class="prod"><div class="nm">${p.name}<br><span class="pc">${yen(p.price)}（税込）</span></div>
+      <select data-key="${key}" data-code="${p.code}">${opts}</select></div>`;
+  }).join('');
+}
+
+/* ---------- 金額計算 ---------- */
+function readQty(key) {
+  const out = {};
+  document.querySelectorAll(`select[data-key="${key}"]`).forEach(s => out[s.dataset.code] = +s.value);
+  return out;
+}
+function calc(qty) {
+  const all = PRODUCTS.concat(PROMO_ITEMS);
+  let subtotal = 0; const lines = [];
+  all.forEach(p => { const q = qty[p.code] || 0; if (q > 0) { subtotal += p.price * q; lines.push({ code: p.code, name: p.name, price: p.price, qty: q, amount: p.price * q }); } });
+  const shipping = subtotal > 0 && subtotal < CONFIG.FREE_SHIPPING_THRESHOLD ? CONFIG.SHIPPING_FEE : 0;
+  return { lines, subtotal, shipping, total: subtotal + shipping };
+}
+function sumHtml(c) {
+  return `<div><span>商品合計</span><span>${yen(c.subtotal)}</span></div>
+    <div><span>送料</span><span>${c.subtotal === 0 ? '-' : (c.shipping ? yen(c.shipping) : '無料')}</span></div>
+    <div class="total"><span>お支払い合計</span><span>${yen(c.total)}</span></div>`;
+}
+function firstCalc() { return calc(readQty('f')); }
+function subCalc() {
+  if (radio('subscribe') !== 'yes') return null;
+  return radio('subSame') === 'change' ? calc(readQty('s')) : firstCalc();
+}
+function updateFirstSum() { $('firstSum').innerHTML = sumHtml(firstCalc()); }
+function updateSubSum() {
+  $('subSum').innerHTML = sumHtml(calc(readQty('s')));
+  const f = firstCalc();
+  $('subSameDesc').textContent = f.lines.map(l => `${l.name}×${l.qty}`).join('、');
+  $('subSameSum').innerHTML = '<div style="font-weight:700;margin-bottom:4px">毎月のお届け内容</div>' +
+    f.lines.map(l => `<div><span>${l.name} ×${l.qty}</span><span>${yen(l.amount)}</span></div>`).join('') + sumHtml(f);
+}
+
+/* ---------- イベント ---------- */
+function radio(name) { const r = document.querySelector(`input[name="${name}"]:checked`); return r ? r.value : ''; }
+function syncChoiceStyle() {
+  document.querySelectorAll('.choice').forEach(ch => ch.classList.toggle('sel', ch.querySelector('input').checked));
+}
+function bindEvents() {
+  $('nextBtn').addEventListener('click', onNext);
+  $('backBtn').addEventListener('click', () => { if (state.page > 1) showPage(prevPage(state.page)); });
+  $('closeBtn').addEventListener('click', () => { if (!MOCK && liff.isInClient()) liff.closeWindow(); else window.close(); });
+
+  document.querySelectorAll('input[type=radio]').forEach(r => r.addEventListener('change', () => { syncChoiceStyle(); onRadioChange(); }));
+  document.querySelectorAll('select[data-key="f"]').forEach(s => s.addEventListener('change', () => { updateFirstSum(); updateSubSum(); }));
+  document.querySelectorAll('select[data-key="s"]').forEach(s => s.addEventListener('change', updateSubSum));
+
+  // 数字のみ入力
+  ['authCode', 'refId', 'zip', 'sZip', 'yuchoKigo', 'yuchoBango', 'accountNo'].forEach(id => {
+    $(id).addEventListener('input', e => { e.target.value = toHalf(e.target.value).replace(/[^0-9]/g, ''); });
+  });
+  ['tel', 'sTel'].forEach(id => {
+    $(id).addEventListener('input', e => { e.target.value = toHalf(e.target.value).replace(/[^0-9\-]/g, ''); });
+  });
+  // フリガナ：ひらがな→カタカナ
+  document.querySelectorAll('.kana').forEach(el => el.addEventListener('blur', () => { el.value = toKana(el.value); }));
+  // 郵便番号→住所
+  $('zip').addEventListener('input', () => lookupZip('zip', 'addr1', 'addr2'));
+  $('sZip').addEventListener('input', () => lookupZip('sZip', 'sAddr1', 'sAddr2'));
+  // ニックネーム希望
+  $('useNickname').addEventListener('change', () => { $('nicknameBox').classList.toggle('hidden', !$('useNickname').checked); if ($('useNickname').checked) $('nickname').focus(); });
+  // ボーナス受取拒否
+  $('bonusRefuse').addEventListener('change', () => $('bankArea').classList.toggle('hidden', $('bonusRefuse').checked));
+  // 入力したらエラー表示を消す
+  document.querySelectorAll('input,select,textarea').forEach(el => ['change', 'input'].forEach(ev => el.addEventListener(ev, () => clearErr(el.id || el.name))));
+}
+function onRadioChange() {
+  const bt = radio('bankType');
+  $('yuchoBox').classList.toggle('hidden', bt !== 'yucho');
+  $('otherBankBox').classList.toggle('hidden', bt !== 'other');
+  const sub = radio('subscribe') === 'yes';
+  $('subArea').classList.toggle('hidden', !sub);
+  const change = radio('subSame') === 'change';
+  $('subItemsCard').classList.toggle('hidden', !change);
+  $('subSameSumCard').classList.toggle('hidden', radio('subSame') !== 'same');
+  $('shipOtherBox').classList.toggle('hidden', radio('shipTo') !== 'other');
+  $('npNotice').classList.toggle('hidden', radio('payFirst') !== 'NP後払い');
+  ['subscribe', 'subSame', 'bankType', 'shipTo', 'payFirst', 'paySub'].forEach(n => { if (radio(n)) clearErr(n); });
+  if (radio('payFirst') === 'NP後払い') checkNpLimit(true);
+}
+function checkNpLimit(showMsg) {
+  const f = firstCalc();
+  if (radio('payFirst') === 'NP後払い' && f.total > CONFIG.NP_LIMIT) {
+    if (showMsg) setErr('payFirst', `NP後払いでご利用いただける金額は${yen(CONFIG.NP_LIMIT)}までです。今回のご注文（${yen(f.total)}）は、お振込またはクレジットカードをお選びください。`);
+    return false;
+  }
+  return true;
+}
+
+/* ---------- 全角→半角・カナ変換 ---------- */
+function toHalf(s) { return s.replace(/[０-９－ー]/g, c => c === '－' || c === 'ー' ? '-' : String.fromCharCode(c.charCodeAt(0) - 0xFEE0)); }
+function toKana(s) { return s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60)).replace(/\s+/g, ''); }
+
+/* ---------- 郵便番号検索（zipcloud / JSONP） ---------- */
+let zipSeq = 0;
+function lookupZip(zipId, addrId, focusId) {
+  const z = $(zipId).value.replace(/[^0-9]/g, '');
+  if (z.length !== 7) return;
+  const cb = '__zipcb' + (++zipSeq);
+  window[cb] = (res) => {
+    delete window[cb];
+    if (res && res.results && res.results[0]) {
+      const r = res.results[0];
+      $(addrId).value = r.address1 + r.address2 + r.address3;
+      clearErr(addrId); clearErr(zipId);
+      $(focusId).focus();
+    } else {
+      setErr(zipId, '該当する住所が見つかりませんでした。住所を直接ご入力ください。');
+    }
+  };
+  const sc = document.createElement('script');
+  sc.src = `https://zipcloud.ibsnet.co.jp/api/search?zipcode=${z}&callback=${cb}`;
+  sc.onerror = () => { delete window[cb]; };
+  document.body.appendChild(sc);
+  setTimeout(() => sc.remove(), 10000);
+}
+
+/* ---------- エラー表示 ---------- */
+function setErr(key, msg) {
+  const e = document.querySelector(`.errmsg[data-for="${key}"]`);
+  if (e) { e.textContent = msg; e.classList.add('show'); }
+  const el = $(key); if (el) el.classList.add('ng');
+}
+function clearErr(key) {
+  if (!key) return;
+  const e = document.querySelector(`.errmsg[data-for="${key}"]`);
+  if (e) { e.textContent = ''; e.classList.remove('show'); }
+  const el = $(key); if (el) el.classList.remove('ng');
+}
+function clearAllErr(page) {
+  page.querySelectorAll('.errmsg').forEach(e => { e.textContent = ''; e.classList.remove('show'); });
+  page.querySelectorAll('.ng').forEach(e => e.classList.remove('ng'));
+}
+function v(id) { return ($(id).value || '').trim(); }
+const TEL_RE = /^0\d{9,10}$/;
+
+/* ---------- ページ別チェック ---------- */
+function validate(page) {
+  const errs = [];
+  const need = (id, label) => { if (!v(id)) errs.push([id, `${label}を入力してください`]); };
+  const needSel = (id, label) => { if (!$(id).value) errs.push([id, `${label}を選択してください`]); };
+
+  if (page === 1) {
+    if (!/^\d{6}$/.test(v('authCode'))) errs.push(['authCode', '認証番号は6桁の数字で入力してください']);
+    need('lastName', '姓'); need('firstName', '名');
+    ['lastKana', 'firstKana'].forEach(id => {
+      $(id).value = toKana($(id).value);
+      if (!v(id)) errs.push([id, 'フリガナを入力してください']);
+      else if (!/^[ァ-ヶー]+$/.test(v(id))) errs.push([id, 'フリガナはカタカナで入力してください']);
+    });
+    if ($('useNickname').checked) need('nickname', 'ニックネーム');
+    if (!dateStr('birth')) errs.push(['birthY', '生年月日を選択してください']);
+    needSel('gender', '性別');
+    if (!/^\d{7}$/.test(v('zip'))) errs.push(['zip', '郵便番号は7桁の数字で入力してください']);
+    need('addr1', '住所'); need('addr2', '番地');
+    if (!TEL_RE.test(v('tel').replace(/-/g, ''))) errs.push(['tel', '電話番号を正しく入力してください（0から始まる10〜11桁）']);
+    if (!/^\d+$/.test(v('refId'))) errs.push(['refId', '紹介者の会員番号を数字で入力してください']);
+    need('refName', '紹介者のお名前');
+    if (!dateStr('refBirth')) errs.push(['refBirthY', '紹介者の生年月日を選択してください']);
+  }
+  if (page === 2 && !$('bonusRefuse').checked) {
+    const bt = radio('bankType');
+    if (!bt) errs.push(['bankType', '金融機関を選択してください']);
+    if (bt === 'yucho') {
+      if (!/^\d{5}$/.test(v('yuchoKigo'))) errs.push(['yuchoKigo', '記号は5桁の数字で入力してください']);
+      if (!/^\d{1,8}$/.test(v('yuchoBango'))) errs.push(['yuchoBango', '番号は8桁以内の数字で入力してください']);
+    }
+    if (bt === 'other') {
+      need('bankName', '銀行名'); need('branchName', '支店名'); needSel('accountType', '口座種別');
+      if (!/^\d{1,7}$/.test(v('accountNo'))) errs.push(['accountNo', '口座番号は7桁以内の数字で入力してください']);
+    }
+  }
+  if (page === 3 && firstCalc().subtotal === 0) errs.push(['firstItems', '商品を1点以上お選びください']);
+  if (page === 4) {
+    if (!radio('subscribe')) errs.push(['subscribe', '定期購入する・しないを選択してください']);
+    if (radio('subscribe') === 'yes') {
+      if (!radio('subSame')) errs.push(['subSame', '定期購入の内容を選択してください']);
+      if (radio('subSame') === 'change' && calc(readQty('s')).subtotal === 0) errs.push(['subItems', '商品を1点以上お選びください']);
+    }
+  }
+  if (page === 5) {
+    if (!radio('shipTo')) errs.push(['shipTo', 'お届け先を選択してください']);
+    if (radio('shipTo') === 'other') {
+      if (!/^\d{7}$/.test(v('sZip'))) errs.push(['sZip', '郵便番号は7桁の数字で入力してください']);
+      need('sAddr1', '住所'); need('sAddr2', '番地'); need('sName', 'お届け先のお名前');
+      if (!TEL_RE.test(v('sTel').replace(/-/g, ''))) errs.push(['sTel', '電話番号を正しく入力してください']);
+    }
+  }
+  if (page === 6) {
+    if (!radio('payFirst')) errs.push(['payFirst', '初回購入のお支払い方法を選択してください']);
+    else if (!checkNpLimit(false)) errs.push(['payFirst', `NP後払いでご利用いただける金額は${yen(CONFIG.NP_LIMIT)}までです。今回のご注文（${yen(firstCalc().total)}）は、お振込またはクレジットカードをお選びください。`]);
+    if (radio('subscribe') === 'yes' && !radio('paySub')) errs.push(['paySub', '定期購入のお支払い方法を選択してください']);
+  }
+  errs.forEach(([k, m]) => setErr(k, m));
+  if (errs.length) {
+    const first = $(errs[0][0]) || document.querySelector(`.errmsg[data-for="${errs[0][0]}"]`);
+    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  return errs.length === 0;
+}
+
+/* ---------- ページ遷移 ---------- */
+function prevPage(p) { return p - 1; }
+function onNext() {
+  const p = state.page;
+  if (p === 7) { submit(); return; }
+  clearAllErr(pages[p - 1]);
+  if (!validate(p)) return;
+  if (p === 1) { $('bankHolder').value = v('lastKana') + ' ' + v('firstKana'); }
+  showPage(p + 1);
+}
+function showPage(n) {
+  state.page = n;
+  pages.forEach((pg, i) => pg.classList.toggle('active', i + 1 === n));
+  document.querySelectorAll('#progress span').forEach((s, i) => s.classList.toggle('on', i < n));
+  $('steplabel').textContent = `ステップ ${n} / ${TOTAL_STEPS}　${pages[n - 1].dataset.label}`;
+  $('backBtn').classList.toggle('hidden', n === 1);
+  $('navbar').classList.toggle('hidden', n === 8);
+  $('nextBtn').textContent = n === 7 ? 'この内容で申し込む' : '次へ';
+  if (n === 4) updateSubSum();
+  if (n === 5) $('homeAddrDesc').textContent = `〒${v('zip')} ${v('addr1')}${v('addr2')} ${v('addr3')}`;
+  if (n === 6) {
+    const f = firstCalc(), s = subCalc();
+    $('firstPayTotal').textContent = `初回のお支払い合計：${yen(f.total)}`;
+    $('paySubCard').classList.toggle('hidden', !s);
+    if (s) $('subPayTotal').textContent = `毎月のお支払い合計：${yen(s.total)}`;
+  }
+  if (n === 7) renderConfirm();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- 送信データ ---------- */
+function collect() {
+  const refuse = $('bonusRefuse').checked, bt = radio('bankType');
+  const f = firstCalc(), s = subCalc();
+  return {
+    authCode: v('authCode'),
+    member: {
+      lastName: v('lastName'), firstName: v('firstName'), lastKana: v('lastKana'), firstKana: v('firstKana'),
+      nickname: $('useNickname').checked ? v('nickname') : '', birth: dateStr('birth'), gender: $('gender').value,
+      zip: v('zip'), addr1: v('addr1'), addr2: v('addr2'), addr3: v('addr3'), tel: v('tel').replace(/-/g, ''),
+    },
+    referrer: { id: v('refId'), name: v('refName'), birth: dateStr('refBirth') },
+    bank: refuse ? { refuse: true } : {
+      refuse: false, type: bt === 'yucho' ? 'ゆうちょ銀行' : 'その他金融機関',
+      yuchoKigo: bt === 'yucho' ? v('yuchoKigo') : '', yuchoBango: bt === 'yucho' ? v('yuchoBango') : '',
+      bankName: bt === 'other' ? v('bankName') : '', branchName: bt === 'other' ? v('branchName') : '',
+      accountType: bt === 'other' ? $('accountType').value : '', accountNo: bt === 'other' ? v('accountNo') : '',
+      holderKana: v('lastKana') + ' ' + v('firstKana'),
+    },
+    firstOrder: { qty: readQty('f'), total: f.total },
+    subscription: s ? { subscribe: true, same: radio('subSame') === 'same', qty: radio('subSame') === 'change' ? readQty('s') : readQty('f'), total: s.total } : { subscribe: false },
+    shipping: radio('shipTo') === 'other'
+      ? { type: '別送先', zip: v('sZip'), addr1: v('sAddr1'), addr2: v('sAddr2'), addr3: v('sAddr3'), name: v('sName'), tel: v('sTel').replace(/-/g, '') }
+      : { type: '登録住所' },
+    deliveryTime: $('deliveryTime').value,
+    memo: v('memo'),
+    payment: { first: radio('payFirst'), sub: s ? radio('paySub') : '' },
+  };
+}
+
+/* ---------- 確認画面 ---------- */
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function tbl(rows) { return '<table class="cf">' + rows.map(r => `<tr><th>${esc(r[0])}</th><td>${esc(r[1]) || '－'}</td></tr>`).join('') + '</table>'; }
+function block(title, page, inner) {
+  return `<div class="card"><div class="cf-head"><h3 style="margin:0 0 8px">${title}</h3><a onclick="showPage(${page})">修正する</a></div>${inner}</div>`;
+}
+function orderTbl(c) {
+  return '<table class="cf">' + c.lines.map(l => `<tr><th>${esc(l.name)}</th><td>${l.qty}点　${yen(l.amount)}</td></tr>`).join('') +
+    `<tr><th>送料</th><td>${c.shipping ? yen(c.shipping) : '無料'}</td></tr><tr><th><b>合計</b></th><td><b>${yen(c.total)}</b></td></tr></table>`;
+}
+function renderConfirm() {
+  const d = collect(), m = d.member, r = d.referrer, b = d.bank;
+  const f = firstCalc(), s = subCalc();
+  let h = '';
+  h += block('会員情報', 1, tbl([
+    ['認証番号', d.authCode], ['お名前', m.lastName + ' ' + m.firstName], ['フリガナ', m.lastKana + ' ' + m.firstKana],
+    ['ニックネーム', m.nickname], ['生年月日', m.birth], ['性別', m.gender],
+    ['住所', `〒${m.zip} ${m.addr1}${m.addr2} ${m.addr3}`], ['電話番号', m.tel],
+  ]));
+  h += block('ご紹介者', 1, tbl([['会員番号', r.id], ['お名前', r.name], ['生年月日', r.birth]]));
+  h += block('ボーナス受取口座', 2, b.refuse ? tbl([['受取', '受取を希望しない']]) :
+    tbl(b.type === 'ゆうちょ銀行'
+      ? [['金融機関', 'ゆうちょ銀行'], ['記号', b.yuchoKigo], ['番号', b.yuchoBango], ['名義', b.holderKana]]
+      : [['金融機関', b.bankName], ['支店', b.branchName], ['種別', b.accountType], ['口座番号', b.accountNo], ['名義', b.holderKana]]));
+  h += block('初回のご注文', 3, orderTbl(f));
+  h += block('翌月からの定期購入', 4, s ? (d.subscription.same ? '<div class="hint">初回と同じ内容</div>' : '') + orderTbl(s) : tbl([['定期購入', 'しない']]));
+  const sh = d.shipping;
+  h += block('お届け先', 5, tbl(sh.type === '登録住所'
+    ? [['お届け先', '登録住所'], ['配達希望時間帯', d.deliveryTime], ['特記事項', d.memo]]
+    : [['お届け先', '別送先'], ['住所', `〒${sh.zip} ${sh.addr1}${sh.addr2} ${sh.addr3}`], ['お名前', sh.name], ['電話番号', sh.tel], ['配達希望時間帯', d.deliveryTime], ['特記事項', d.memo]]));
+  h += block('お支払い方法', 6, tbl([['初回購入', d.payment.first]].concat(s ? [['定期購入', d.payment.sub]] : [])));
+  $('confirmArea').innerHTML = h;
+}
+
+/* ---------- 送信 ---------- */
+async function submit() {
+  const btn = $('nextBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  showOverlay('送信しています…');
+  const payload = { requestId: state.requestId, idToken: state.idToken, lineUserId: state.lineUserId, lineName: state.lineName, data: collect() };
+  try {
+    let res;
+    if (!CONFIG.GAS_URL) {
+      await new Promise(r => setTimeout(r, 600));
+      res = { ok: true, orderNo: '20260919-001' };
+    } else {
+      const r = await fetch(CONFIG.GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+      res = await r.json();
+    }
+    if (!res.ok) throw new Error(res.message || '送信に失敗しました');
+    state.orderNo = res.orderNo;
+    renderDone(payload.data);
+    showPage(8);
+  } catch (e) {
+    alert('送信できませんでした。電波の良い場所でもう一度「この内容で申し込む」を押してください。\n\n' + (e.message || e) +
+      `\n\n解決しない場合は注文センター（${CONFIG.ORDER_CENTER_TEL}）へご連絡ください。`);
+  } finally { btn.disabled = false; hideOverlay(); }
+}
+
+/* ---------- 完了画面（決済手続き案内） ---------- */
+function openUrl(url) {
+  if (!MOCK && window.liff && liff.isInClient()) liff.openWindow({ url, external: false });
+  else window.open(url, '_blank');
+}
+function renderDone(d) {
+  $('doneOrderNo').textContent = state.orderNo;
+  const pf = d.payment.first, ps = d.payment.sub;
+  const needCard = pf === 'クレジットカード' || ps === 'クレジットカード';
+  const needFurikae = ps === '口座振替';
+  let h = '';
+
+  if (needCard) {
+    const url = CONFIG.CARD_URL_BASE + encodeURIComponent(state.orderNo);
+    const which = [pf === 'クレジットカード' ? '初回購入' : '', ps === 'クレジットカード' ? '定期購入' : ''].filter(Boolean).join('・');
+    h += `<div class="card"><h3 style="margin-top:0">クレジットカードの登録（${which}）</h3>
+      下のボタンから決済会社（CREDIX）のページへ進み、カードをご登録ください。
+      <button class="btn btn-link" type="button" onclick="openUrl('${url}')">クレジットカードを登録する</button>
+      <div class="notice"><b>うまく登録できなかった場合</b><br>
+      CREDIXへのクレジットカードの登録を電話で行う場合は、<a class="tel" href="tel:${CONFIG.CREDIX_TEL.replace(/-/g, '')}">${CONFIG.CREDIX_TEL}</a>（年中無休24時間）で登録番号を取得し、注文センターに公式LINEからご連絡ください。</div></div>`;
+  }
+  if (needFurikae) {
+    h += `<div class="card"><h3 style="margin-top:0">口座振替のお申込み（定期購入）</h3>
+      下のボタンから口座振替のお手続きへ進んでください。
+      <button class="btn btn-link" type="button" onclick="openUrl('${CONFIG.FURIKAE_URL}')">口座振替を申し込む</button>
+      <div class="notice"><b>うまく申し込めなかった場合</b><br>
+      ビジネスガイドの「口座振替申請書」をコピーし、必要事項を記入・捺印の上、注文センターへお送りください。</div></div>`;
+  }
+  if (pf === '振込') {
+    h += `<div class="card"><h3 style="margin-top:0">初回購入のお振込先</h3>
+      <div class="bankbox"><b>＜ゆうちょ銀行からのお振込＞</b><br>記号：10050　番号：7258141<br>名義：ニッシンショウジ(カ</div>
+      <div class="bankbox"><b>＜ゆうちょ銀行以外の金融機関からのお振込＞</b><br>ゆうちょ銀行　支店：ゼロゼロハチ（〇〇八）<br>普通　口座番号：725814<br>名義：ニッシンショウジ(カ</div>
+      <ul style="font-size:14px;padding-left:20px">
+        <li>振込手数料はご本人負担でお願いします。</li>
+        <li>振込後に発行される「利用明細」を、LINEから写真でお送りください。</li>
+        <li>送金依頼人を入力する際、お名前の前に「会員番号」をご入力ください。会員番号がまだお手元にない場合は、注文番号（${esc(state.orderNo)}）をご入力ください。</li>
+      </ul></div>`;
+  }
+  if (pf === 'NP後払い') {
+    h += `<div class="card"><h3 style="margin-top:0">初回購入：NP後払い</h3>
+      請求書をお送りしますので、PayPayなど、コンビニ・銀行・郵便局でお支払いください。
+      <div class="notice">「NP後払い」は決済の度に、株式会社ネットプロテクションズの審査があり決済ができないことがあります。その場合には他の決済方法をお願いする場合があります。</div></div>`;
+  }
+  if (d.subscription.subscribe) {
+    h += `<div class="card"><h3 style="margin-top:0">定期購入の次回お届け予定</h3>${esc(nextShipText(ps))}</div>`;
+  }
+  if (!needCard && !needFurikae) {
+    $('doneReassureSub').textContent = '決済会社でのお手続きは不要です。';
+  }
+  $('doneGuides').innerHTML = h;
+}
+function nextShipText(paySub) {
+  const now = new Date(); const nm = (now.getMonth() + 1) % 12 + 1;
+  return paySub === '口座振替'
+    ? `口座振替の場合は、NP後払いにて${nm}月15日前後に出荷します。`
+    : `クレジットカードの場合は、${nm}月10日前後に出荷します。`;
+}
+
+function showOverlay(msg) { $('overlayMsg').textContent = msg; $('overlay').classList.add('show'); }
+function hideOverlay() { $('overlay').classList.remove('show'); }
+</script>
+</body>
+</html>
