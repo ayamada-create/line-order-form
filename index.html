@@ -689,8 +689,9 @@
 // 設定（デプロイ後に書き換えてください）
 // ================================================================
 const LIFF_ID = '2010475932-1iD1eu6x';          // LIFFアプリID
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxc-ZOmeROxqjgAq0yV_rflK4IIUWMr30K9493MzXoQkZlDA6oJobZzrlQ1a5i_rKWo/exec';  
-const API_SECRET = '949cfdbabae1ba67c180543d4918cdb371b780349d1a60ee';
+   const GAS_URL = 'https://script.google.com/macros/s/AKfycbxc-ZOmeROxqjgAq0yV_rflK4IIUWMr30K9493MzXoQkZIDA6oJobZzrlQ1a5i_rKWo/exec';  // GASデプロイURL
+const API_SECRET = '949cfdbabae1ba67c180543d4918cdb371b780349d1a60ee'; // GAS側の ORDER_API_SECRET と同じ値にすること
+
 // ================================================================
 // 商品マスター
 // ================================================================
@@ -1055,30 +1056,19 @@ async function submitOrder() {
     orderDate:    new Date().toLocaleString('ja-JP'),
   };
 
-  try {
-    const res = await fetch(GAS_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body:    JSON.stringify(orderData),
-    });
-    const json = await res.json();
-    if (json.status === 'ok') {
-      goPage(7);
-      // 銀行振込の場合は振込先表示
-      if (state.payment === 'bank') {
-        document.getElementById('bankInfoDisplay').style.display = 'block';
-        document.getElementById('completeDesc').innerHTML =
-          'ご注文を受け付けました。<br>LINEに注文確認メッセージをお送りします。<br><br>下記の口座へお振込をお願いいたします。';
-      }
-    } else {
-      alert('送信に失敗しました。\n' + (json.message || 'しばらく経ってから再度お試しください。'));
-      goPage(5);
-    }
-  } catch(e) {
-    console.error('送信エラー:', e);
-    alert('通信エラーが発生しました。\nインターネット接続を確認のうえ、再度お試しください。');
-    goPage(5);
-  }
+     // 【2026-09-29 変更】スマホのLINE内ブラウザではfetchが止められるため、
+     // 確実に届く「ページとして送信する」方式に変更。送信後はGASが受付完了画面を表示する。
+     const form = document.createElement('form');
+     form.method = 'POST';
+     form.action = GAS_URL;
+     form.acceptCharset = 'UTF-8';
+     const input = document.createElement('input');
+     input.type  = 'hidden';
+     input.name  = 'payload';
+     input.value = JSON.stringify(orderData);
+     form.appendChild(input);
+     document.body.appendChild(form);
+     form.submit();
 }
 </script>
 </body>
