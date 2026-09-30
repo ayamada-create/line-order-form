@@ -834,6 +834,44 @@ function renderConfirm() {
 }
 
 /* ---------- 送信 ---------- */
+  function postViaIframe(payload) {
+  return new Promise((resolve, reject) => {
+    const name = 'gasFrame' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = name;
+    iframe.style.display = 'none';
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = CONFIG.GAS_URL;
+    form.target = name;
+    form.acceptCharset = 'UTF-8';
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'payload';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+    let finished = false;
+    const cleanup = () => {
+      window.removeEventListener('message', onMsg);
+      clearTimeout(timer);
+      setTimeout(() => { iframe.remove(); form.remove(); }, 0);
+    };
+    const onMsg = (ev) => {
+      const d = ev.data;
+      if (!d || d.source !== 'lifwell-gas' || d.requestId !== payload.requestId) return;
+      finished = true;
+      cleanup();
+      resolve(d.result);
+    };
+    const timer = setTimeout(() => {
+      if (!finished) { cleanup(); reject(new Error('応答がありませんでした（時間切れ）')); }
+    }, 45000);
+    window.addEventListener('message', onMsg);
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+    form.submit();
+  });
+}
 async function submit() {
   const btn = $('nextBtn');
   if (btn.disabled) return;
@@ -846,8 +884,7 @@ async function submit() {
       await new Promise(r => setTimeout(r, 600));
       res = { ok: true, orderNo: '20260919-001' };
     } else {
-      const r = await fetch(CONFIG.GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-            const txt = await r.text(); try { res = JSON.parse(txt); } catch (pe) { throw new Error('応答が想定外です status=' + r.status + ' body=' + txt.slice(0, 200)); }
+      res = await postViaIframe(payload);
     }
     if (!res.ok) throw new Error(res.message || '送信に失敗しました');
     state.orderNo = res.orderNo;
