@@ -847,7 +847,7 @@ async function submit() {
       res = { ok: true, orderNo: '20260919-001' };
     } else {
       const r = await fetch(CONFIG.GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-      res = await r.json();
+            const txt = await r.text(); try { res = JSON.parse(txt); } catch (pe) { throw new Error('応答が想定外です status=' + r.status + ' body=' + txt.slice(0, 200)); }
     }
     if (!res.ok) throw new Error(res.message || '送信に失敗しました');
     state.orderNo = res.orderNo;
